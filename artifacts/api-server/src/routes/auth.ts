@@ -75,13 +75,20 @@ router.post("/register", async (req: Request, res: Response) => {
       }),
     );
   } catch (err: any) {
-    const msg = err?.message?.toLowerCase() ?? "";
-    if (msg.includes("unique") && msg.includes("email")) {
+    const pg = err?.cause ?? err;
+    const isUniqueViolation = pg?.code === "23505";
+    const constraint = (pg?.constraint ?? pg?.constraint_name ?? "").toLowerCase();
+    const detail = (pg?.detail ?? "").toLowerCase();
+    if (isUniqueViolation && (constraint.includes("email") || detail.includes("email"))) {
       return res.status(400).json(ErrorResponseSchema.parse({ error: "Email already registered" }));
     }
-    if (msg.includes("unique") && msg.includes("student_id")) {
+    if (isUniqueViolation && (constraint.includes("student_id") || detail.includes("student_id"))) {
       return res.status(400).json(ErrorResponseSchema.parse({ error: "Student ID already registered" }));
     }
+    if (isUniqueViolation) {
+      return res.status(400).json(ErrorResponseSchema.parse({ error: "Account already exists" }));
+    }
+    console.error("Registration error:", err?.message);
     return res.status(500).json(ErrorResponseSchema.parse({ error: "Registration failed" }));
   }
 });
