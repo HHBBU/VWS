@@ -1,22 +1,29 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Veloce Wear SCM Simulation API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: student
+    description: Student operations
+  - name: instructor
+    description: Instructor operations
+  - name: modules
+    description: Module operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +31,303 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutUser
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /student/dashboard:
+    get:
+      operationId: getStudentDashboard
+      tags: [student]
+      summary: Get student dashboard data
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardData"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /student/modules/{moduleKey}:
+    get:
+      operationId: getModuleData
+      tags: [student]
+      summary: Get module data for student
+      parameters:
+        - name: moduleKey
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [M1, M2, M3]
+      responses:
+        "200":
+          description: Module data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModuleData"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Module locked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /student/modules/{moduleKey}/practice:
+    post:
+      operationId: runPractice
+      tags: [student]
+      summary: Run a practice simulation
+      parameters:
+        - name: moduleKey
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [M1, M2, M3]
+      responses:
+        "200":
+          description: Practice run result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunResult"
+        "400":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /student/modules/{moduleKey}/submit:
+    post:
+      operationId: submitFinal
+      tags: [student]
+      summary: Submit final for a module
+      parameters:
+        - name: moduleKey
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [M1, M2, M3]
+      responses:
+        "200":
+          description: Final submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunResult"
+        "400":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /instructor/gradebook:
+    get:
+      operationId: getGradebook
+      tags: [instructor]
+      summary: Get gradebook with all students
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: section
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Gradebook data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradebookData"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /instructor/gradebook/export:
+    get:
+      operationId: exportGradebook
+      tags: [instructor]
+      summary: Export gradebook as CSV
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /instructor/settings:
+    get:
+      operationId: getSettings
+      tags: [instructor]
+      summary: Get module settings and extensions
+      responses:
+        "200":
+          description: Settings data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsData"
+
+  /instructor/settings/windows:
+    put:
+      operationId: updateModuleWindows
+      tags: [instructor]
+      summary: Update module time windows
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWindowsRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /instructor/extensions:
+    post:
+      operationId: addExtension
+      tags: [instructor]
+      summary: Add per-student extension
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddExtensionRequest"
+      responses:
+        "200":
+          description: Extension added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /instructor/extensions/{extensionId}:
+    delete:
+      operationId: removeExtension
+      tags: [instructor]
+      summary: Remove a student extension
+      parameters:
+        - name: extensionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Extension removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +335,293 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        studentId:
+          type: string
+        password:
+          type: string
+        confirmPassword:
+          type: string
+        section:
+          type: string
+      required: [name, email, studentId, password, confirmPassword]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/UserProfile"
+        message:
+          type: string
+      required: [user, message]
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        studentId:
+          type: string
+        section:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [student, instructor]
+      required: [id, name, email, studentId, role]
+
+    ModuleInfo:
+      type: object
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        maxScore:
+          type: integer
+        status:
+          type: string
+          enum: [Locked, "Not started", "In progress", Submitted]
+        window:
+          type: string
+          enum: [Open, Closed]
+        isUnlocked:
+          type: boolean
+        score:
+          type: integer
+          nullable: true
+        submittedAt:
+          type: string
+          nullable: true
+        practiceRunCount:
+          type: integer
+      required: [key, title, maxScore, status, window, isUnlocked, practiceRunCount]
+
+    DashboardData:
+      type: object
+      properties:
+        modules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModuleInfo"
+        totalScore:
+          type: integer
+        maxTotal:
+          type: integer
+        totalPracticeRuns:
+          type: integer
+        userName:
+          type: string
+      required: [modules, totalScore, maxTotal, totalPracticeRuns, userName]
+
+    SimulationRun:
+      type: object
+      properties:
+        runNumber:
+          type: integer
+        score:
+          type: integer
+        isFinal:
+          type: boolean
+        createdAt:
+          type: string
+      required: [runNumber, score, isFinal, createdAt]
+
+    ModuleData:
+      type: object
+      properties:
+        moduleKey:
+          type: string
+        isSubmitted:
+          type: boolean
+        isUnlocked:
+          type: boolean
+        finalSubmission:
+          nullable: true
+          type: object
+          properties:
+            score:
+              type: integer
+            maxScore:
+              type: integer
+            submittedAt:
+              type: string
+        recentRuns:
+          type: array
+          items:
+            $ref: "#/components/schemas/SimulationRun"
+        practiceCount:
+          type: integer
+      required: [moduleKey, isSubmitted, isUnlocked, recentRuns, practiceCount]
+
+    RunResult:
+      type: object
+      properties:
+        runNumber:
+          type: integer
+        score:
+          type: integer
+        isFinal:
+          type: boolean
+        message:
+          type: string
+      required: [runNumber, score, isFinal, message]
+
+    StudentGradeRow:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        studentId:
+          type: string
+        section:
+          type: string
+        m1Score:
+          type: integer
+        m1Submitted:
+          type: string
+          nullable: true
+        m2Score:
+          type: integer
+        m2Submitted:
+          type: string
+          nullable: true
+        m3Score:
+          type: integer
+        m3Submitted:
+          type: string
+          nullable: true
+        total:
+          type: integer
+      required: [id, name, email, studentId, section, m1Score, m2Score, m3Score, total]
+
+    GradebookData:
+      type: object
+      properties:
+        students:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentGradeRow"
+        sections:
+          type: array
+          items:
+            type: string
+        totalStudents:
+          type: integer
+      required: [students, sections, totalStudents]
+
+    ModuleWindow:
+      type: object
+      properties:
+        moduleKey:
+          type: string
+        title:
+          type: string
+        startAt:
+          type: string
+        endAt:
+          type: string
+        isEnabled:
+          type: boolean
+      required: [moduleKey, title, startAt, endAt, isEnabled]
+
+    ExtensionRow:
+      type: object
+      properties:
+        id:
+          type: integer
+        studentName:
+          type: string
+        studentId:
+          type: string
+        moduleKey:
+          type: string
+        extendedEnd:
+          type: string
+        note:
+          type: string
+      required: [id, studentName, studentId, moduleKey, extendedEnd, note]
+
+    SettingsData:
+      type: object
+      properties:
+        windows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModuleWindow"
+        extensions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtensionRow"
+      required: [windows, extensions]
+
+    UpdateWindowsRequest:
+      type: object
+      properties:
+        windows:
+          type: array
+          items:
+            type: object
+            properties:
+              moduleKey:
+                type: string
+              startAt:
+                type: string
+              endAt:
+                type: string
+              isEnabled:
+                type: boolean
+            required: [moduleKey, startAt, endAt, isEnabled]
+      required: [windows]
+
+    AddExtensionRequest:
+      type: object
+      properties:
+        studentId:
+          type: string
+        moduleKey:
+          type: string
+        extendedEnd:
+          type: string
+        note:
+          type: string
+      required: [studentId, moduleKey, extendedEnd]
