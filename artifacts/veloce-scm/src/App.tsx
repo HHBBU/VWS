@@ -23,6 +23,7 @@ import StudentDashboard from "@/pages/student/dashboard";
 import ModulePage from "@/pages/student/module";
 import Module1Page from "@/pages/student/module1";
 import Module2Page from "@/pages/student/module2";
+import Module3Page from "@/pages/student/module3";
 
 // Instructor Pages
 import Gradebook from "@/pages/instructor/gradebook";
@@ -65,6 +66,11 @@ function Router() {
         <Route path="/module/M2">
           <ProtectedRoute allowedRole="student">
             <Module2Page />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/module/M3">
+          <ProtectedRoute allowedRole="student">
+            <Module3Page />
           </ProtectedRoute>
         </Route>
         <Route path="/module/:key">

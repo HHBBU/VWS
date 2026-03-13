@@ -22,6 +22,7 @@ import {
 } from "@workspace/api-zod";
 import { runModule1Simulation, type M1Decisions } from "../lib/module1Engine";
 import { runModule2Simulation, type M2Decisions } from "../lib/module2Engine";
+import { runModule3Simulation, type M3Decisions } from "../lib/module3Engine";
 import { getHistoricalData } from "../lib/historicalData";
 
 const ErrorResponseSchema = { parse: (v: any) => v };
@@ -173,6 +174,38 @@ router.get("/modules/M1/historical", requireStudent, async (_req: Request, res: 
   return res.json(data);
 });
 
+// GET M1+M2 context data for M3 (forecasts, M2 service level, utilization)
+router.get("/modules/M3/context", requireStudent, async (req: Request, res: Response) => {
+  const userId = req.session.userId!;
+
+  const [m1Sub] = await db
+    .select()
+    .from(moduleSubmissionsTable)
+    .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M1")))
+    .limit(1);
+
+  const [m2Sub] = await db
+    .select()
+    .from(moduleSubmissionsTable)
+    .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M2")))
+    .limit(1);
+
+  let m1Kpis: any = {};
+  try { if (m1Sub?.submissionJson) m1Kpis = JSON.parse(m1Sub.submissionJson).kpis ?? {}; } catch {}
+
+  let m2Kpis: any = {};
+  try { if (m2Sub?.submissionJson) m2Kpis = JSON.parse(m2Sub.submissionJson).kpis ?? {}; } catch {}
+
+  return res.json({
+    hasM1Data: !!m1Sub,
+    hasM2Data: !!m2Sub,
+    forecastA:             m1Kpis.forecastA               ?? 17800,
+    forecastB:             m1Kpis.forecastB               ?? 9000,
+    m2ServiceLevel:        m2Kpis.serviceLevel            ?? 96,
+    m2CapacityUtilization: m2Kpis.capacityUtilization     ?? 80,
+  });
+});
+
 // GET M1 context data for M2 (reliability, lead time, forecasts)
 router.get("/modules/M2/m1-context", requireStudent, async (req: Request, res: Response) => {
   const userId = req.session.userId!;
@@ -271,6 +304,21 @@ function extractM2Decisions(body: any): M2Decisions {
   };
 }
 
+function extractM3Decisions(body: any): M3Decisions {
+  const validNetwork  = ["centralized", "hybrid", "decentralized"];
+  const validService  = ["standard", "express", "mixed"];
+  const validForecast = ["moving_average", "exponential_smoothing", "seasonal", "naive"];
+  const safeInt = (v: any, def = 0) => { const n = parseInt(v, 10); return isNaN(n) ? def : Math.max(0, n); };
+  return {
+    networkStrategy: validNetwork.includes(body.networkStrategy)   ? body.networkStrategy : "hybrid",
+    rop:             safeInt(body.rop,  4500),
+    q:               safeInt(body.q,   9000),
+    serviceMode:     validService.includes(body.serviceMode)        ? body.serviceMode     : "standard",
+    forecastMethod:  validForecast.includes(body.forecastMethod)    ? body.forecastMethod  : "moving_average",
+    justification:   (body.justification || "").trim(),
+  };
+}
+
 function extractM1Decisions(body: any): M1Decisions {
   const allocations = (body.allocations || []).map((a: any) => ({
     supplierId: a.supplierId || a.supplier_id || "",
@@ -345,9 +393,32 @@ router.post("/modules/:moduleKey/practice", requireStudent, async (req: Request,
     decisionsData = decisions;
     extraResult = result;
   } else {
-    practiceScore = Math.floor(Math.random() * 55);
-    decisionsData = { placeholder: "practice" };
-    kpiData = { score: practiceScore };
+    const decisions = extractM3Decisions(req.body);
+    const [m1Sub] = await db
+      .select()
+      .from(moduleSubmissionsTable)
+      .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M1")))
+      .limit(1);
+    const [m2Sub] = await db
+      .select()
+      .from(moduleSubmissionsTable)
+      .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M2")))
+      .limit(1);
+    let m1Kpis: any = {};
+    try { if (m1Sub?.submissionJson) m1Kpis = JSON.parse(m1Sub.submissionJson).kpis ?? {}; } catch {}
+    let m2Kpis: any = {};
+    try { if (m2Sub?.submissionJson) m2Kpis = JSON.parse(m2Sub.submissionJson).kpis ?? {}; } catch {}
+    const m3Context = {
+      forecastA:             m1Kpis.forecastA          ?? 17800,
+      forecastB:             m1Kpis.forecastB          ?? 9000,
+      m2ServiceLevel:        m2Kpis.serviceLevel       ?? 96,
+      m2CapacityUtilization: m2Kpis.capacityUtilization ?? 80,
+    };
+    const result = runModule3Simulation(userId, decisions, m3Context, runNumber);
+    practiceScore = result.score;
+    kpiData = result.kpis;
+    decisionsData = decisions;
+    extraResult = result;
   }
 
   await db.insert(simulationRunsTable).values({
@@ -425,9 +496,32 @@ router.post("/modules/:moduleKey/submit", requireStudent, async (req: Request, r
     decisionsData = decisions;
     extraResult = result;
   } else {
-    finalScore = Math.floor(Math.random() * 55);
-    decisionsData = { placeholder: "final" };
-    kpiData = { score: finalScore };
+    const decisions = extractM3Decisions(req.body);
+    const [m1Sub] = await db
+      .select()
+      .from(moduleSubmissionsTable)
+      .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M1")))
+      .limit(1);
+    const [m2Sub] = await db
+      .select()
+      .from(moduleSubmissionsTable)
+      .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M2")))
+      .limit(1);
+    let m1Kpis: any = {};
+    try { if (m1Sub?.submissionJson) m1Kpis = JSON.parse(m1Sub.submissionJson).kpis ?? {}; } catch {}
+    let m2Kpis: any = {};
+    try { if (m2Sub?.submissionJson) m2Kpis = JSON.parse(m2Sub.submissionJson).kpis ?? {}; } catch {}
+    const m3Context = {
+      forecastA:             m1Kpis.forecastA          ?? 17800,
+      forecastB:             m1Kpis.forecastB          ?? 9000,
+      m2ServiceLevel:        m2Kpis.serviceLevel       ?? 96,
+      m2CapacityUtilization: m2Kpis.capacityUtilization ?? 80,
+    };
+    const result = runModule3Simulation(userId, decisions, m3Context, runNumber);
+    finalScore = result.score;
+    kpiData = result.kpis;
+    decisionsData = decisions;
+    extraResult = result;
   }
 
   const [run] = await db

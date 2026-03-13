@@ -77,6 +77,18 @@ Module 2 is fully implemented. Unlocks only after M1 final submission.
 - Grading: Performance (30pts: Service 15 + Cost 15) + S&OP Quality (10pts) + MRP Logic (8pts) + Justification (5pts) + Validity (2pts) = 55 pts max
 - Routing: `/module/M2` has its own dedicated route in App.tsx (before generic `/module/:key`)
 
+## Module 3: Distribution Network & Inventory Policy (Implemented)
+
+Module 3 is fully implemented. Unlocks only after M2 final submission. Completing M3 finishes the course.
+- **Simulation Engine** (`artifacts/api-server/src/lib/module3Engine.ts`) — 90-day daily stochastic simulation, Mulberry32 PRNG, Poisson demand (normal approximation for large λ), ROP/Q inventory policy, 3 network strategies (centralized/hybrid/decentralized), 3 service modes (standard/express/mixed). [CRITICAL-5]: M2 service level modulates lead time variability (low M2 → wider lead times).
+- **M3 Context Endpoint**: `GET /api/student/modules/M3/context` — returns forecastA, forecastB (from M1), m2ServiceLevel, m2CapacityUtilization (from M2)
+- **Frontend** (`artifacts/veloce-scm/src/pages/student/module3.tsx`) — M1/M2 context banner, interactive ROP/Q saw-tooth Recharts visualizer (ComposedChart: Line + Area + ReferenceLine, updates live as inputs change), network strategy + service mode selects with summary cards, ROP/Q inputs with suggested values, forecast method select, justification textarea with character counter + progress bar, practice/submit with AlertDialog, inline results panel (score, breakdown, KPI grid, cost breakdown, feedback)
+- **Network Configs**: Centralized (€0/wk DC, 5-10d LT), Hybrid (€22k/wk, 3-7d LT), Decentralized (€40k/wk, 1-4d LT)
+- **Service Modes**: Standard (€0.75/unit, 1× carbon), Express (€1.10/unit, 2.5× carbon), Mixed (€0.90/unit, 1.5× carbon)
+- **Target costs** (90 days): Centralized €290k, Hybrid €320k, Decentralized €360k
+- Grading: Performance (35pts: Fill Rate 20 + Cost 15) + Inventory Logic (10pts) + Network Design (5pts) + Justification (3pts) + Validity (2pts) = 55 pts max
+- Routing: `/module/M3` has its own dedicated route in App.tsx (before generic `/module/:key`)
+
 ## API Routes
 
 - `POST /api/auth/register` — Student registration
@@ -88,6 +100,7 @@ Module 2 is fully implemented. Unlocks only after M1 final submission.
 - `GET /api/student/modules/:key` — Module detail + run history
 - `GET /api/student/modules/M1/historical` — Historical demand data for M1
 - `GET /api/student/modules/M2/m1-context` — M1 KPIs for Module 2 (reliability, lead time, forecasts)
+- `GET /api/student/modules/M3/context` — M1+M2 KPIs for Module 3 (forecasts, service level, utilization)
 - `POST /api/student/modules/:key/practice` — Run practice simulation
 - `POST /api/student/modules/:key/submit` — Submit final for module
 
