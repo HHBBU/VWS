@@ -59,6 +59,14 @@ artifacts-monorepo/
 └── package.json            # Root package
 ```
 
+## Module 1: Global Sourcing (Implemented)
+
+Module 1 is fully implemented with:
+- **Simulation Engine** (`artifacts/api-server/src/lib/module1Engine.ts`) — deterministic PRNG (Mulberry32), 8-supplier database, transport modes, assurance packages, quantity discounts, late delivery penalties, full 55-point grading rubric
+- **Historical Data Generator** (`artifacts/api-server/src/lib/historicalData.ts`) — 24 months of SKU A/B demand (seeded at 12345, reproducible)
+- **Frontend** (`artifacts/veloce-scm/src/pages/student/module1.tsx`) — Interactive Recharts bubble chart (cost vs quality vs sustainability), demand data table, forecasting inputs, dynamic supplier allocation table, justification textarea, practice/submit with inline results
+- Grading: Forecasting (15pts) + Supplier Selection (12pts) + Cost/Risk Trade-offs (12pts) + Quality+Sustainability (8pts) + Validity+Justification (8pts) = 55 pts max
+
 ## API Routes
 
 - `POST /api/auth/register` — Student registration
