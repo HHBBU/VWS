@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, TrendingUp, Factory, Truck } from "lucide-react";
+import { ArrowRight, TrendingUp, Factory, Truck, BarChart3 } from "lucide-react";
 
 export default function Intro() {
   return (
