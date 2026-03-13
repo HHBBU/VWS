@@ -21,6 +21,7 @@ import {
   RunPracticeResponse as RunResultSchema,
 } from "@workspace/api-zod";
 import { runModule1Simulation, type M1Decisions } from "../lib/module1Engine";
+import { runModule2Simulation, type M2Decisions } from "../lib/module2Engine";
 import { getHistoricalData } from "../lib/historicalData";
 
 const ErrorResponseSchema = { parse: (v: any) => v };
@@ -172,6 +173,42 @@ router.get("/modules/M1/historical", requireStudent, async (_req: Request, res: 
   return res.json(data);
 });
 
+// GET M1 context data for M2 (reliability, lead time, forecasts)
+router.get("/modules/M2/m1-context", requireStudent, async (req: Request, res: Response) => {
+  const userId = req.session.userId!;
+  const [m1Sub] = await db
+    .select()
+    .from(moduleSubmissionsTable)
+    .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M1")))
+    .limit(1);
+
+  if (!m1Sub?.submissionJson) {
+    return res.json({
+      hasM1Data: false,
+      avgReliabilityPct: 95,
+      avgLeadTimeDays: 8,
+      forecastA: 17800,
+      forecastB: 9000,
+    });
+  }
+
+  let kpis: any = {};
+  try {
+    const parsed = JSON.parse(m1Sub.submissionJson);
+    kpis = parsed.kpis ?? {};
+  } catch {
+    kpis = {};
+  }
+
+  return res.json({
+    hasM1Data: true,
+    avgReliabilityPct: kpis.avgReliabilityPct ?? 95,
+    avgLeadTimeDays: kpis.avgLeadTimeDays ?? 8,
+    forecastA: kpis.forecastA ?? 17800,
+    forecastB: kpis.forecastB ?? 9000,
+  });
+});
+
 // GET detailed run data for a specific run
 router.get(
   "/modules/:moduleKey/runs/:runNumber",
@@ -211,6 +248,28 @@ router.get(
     });
   },
 );
+
+function extractM2Decisions(body: any): M2Decisions {
+  const safeInt = (v: any, def = 0) => {
+    const n = parseInt(v, 10);
+    return isNaN(n) ? def : Math.max(0, n);
+  };
+  const sopPlanA = Array.from({ length: 8 }, (_, i) => safeInt(body.sopPlanA?.[i] ?? body[`w${i + 1}_a`]));
+  const sopPlanB = Array.from({ length: 8 }, (_, i) => safeInt(body.sopPlanB?.[i] ?? body[`w${i + 1}_b`]));
+  const validCapacity = ["standard", "overtime", "two_shift"];
+  const validLot      = ["small", "medium", "large"];
+  const validPriority = ["balanced", "priority_a", "priority_b"];
+  const validSS       = ["3_dos", "6_dos", "9_dos"];
+  return {
+    sopPlanA,
+    sopPlanB,
+    capacityMode: validCapacity.includes(body.capacityMode) ? body.capacityMode : "standard",
+    lotSize:      validLot.includes(body.lotSize)           ? body.lotSize       : "medium",
+    priorityRule: validPriority.includes(body.priorityRule) ? body.priorityRule  : "balanced",
+    safetyStock:  validSS.includes(body.safetyStock)        ? body.safetyStock   : "6_dos",
+    justification: (body.justification || "").trim(),
+  };
+}
 
 function extractM1Decisions(body: any): M1Decisions {
   const allocations = (body.allocations || []).map((a: any) => ({
@@ -261,6 +320,26 @@ router.post("/modules/:moduleKey/practice", requireStudent, async (req: Request,
   if (key === "M1") {
     const decisions = extractM1Decisions(req.body);
     const result = runModule1Simulation(userId, decisions, runNumber);
+    practiceScore = result.score;
+    kpiData = result.kpis;
+    decisionsData = decisions;
+    extraResult = result;
+  } else if (key === "M2") {
+    const decisions = extractM2Decisions(req.body);
+    const [m1Sub] = await db
+      .select()
+      .from(moduleSubmissionsTable)
+      .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M1")))
+      .limit(1);
+    let m1Kpis: any = {};
+    try { if (m1Sub?.submissionJson) m1Kpis = JSON.parse(m1Sub.submissionJson).kpis ?? {}; } catch {}
+    const m1Context = {
+      avgReliabilityPct: m1Kpis.avgReliabilityPct ?? 95,
+      avgLeadTimeDays:   m1Kpis.avgLeadTimeDays   ?? 8,
+      forecastA:         m1Kpis.forecastA          ?? 17800,
+      forecastB:         m1Kpis.forecastB          ?? 9000,
+    };
+    const result = runModule2Simulation(userId, decisions, m1Context, runNumber);
     practiceScore = result.score;
     kpiData = result.kpis;
     decisionsData = decisions;
@@ -321,6 +400,26 @@ router.post("/modules/:moduleKey/submit", requireStudent, async (req: Request, r
   if (key === "M1") {
     const decisions = extractM1Decisions(req.body);
     const result = runModule1Simulation(userId, decisions, runNumber);
+    finalScore = result.score;
+    kpiData = result.kpis;
+    decisionsData = decisions;
+    extraResult = result;
+  } else if (key === "M2") {
+    const decisions = extractM2Decisions(req.body);
+    const [m1Sub] = await db
+      .select()
+      .from(moduleSubmissionsTable)
+      .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M1")))
+      .limit(1);
+    let m1Kpis: any = {};
+    try { if (m1Sub?.submissionJson) m1Kpis = JSON.parse(m1Sub.submissionJson).kpis ?? {}; } catch {}
+    const m1Context = {
+      avgReliabilityPct: m1Kpis.avgReliabilityPct ?? 95,
+      avgLeadTimeDays:   m1Kpis.avgLeadTimeDays   ?? 8,
+      forecastA:         m1Kpis.forecastA          ?? 17800,
+      forecastB:         m1Kpis.forecastB          ?? 9000,
+    };
+    const result = runModule2Simulation(userId, decisions, m1Context, runNumber);
     finalScore = result.score;
     kpiData = result.kpis;
     decisionsData = decisions;

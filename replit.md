@@ -67,6 +67,16 @@ Module 1 is fully implemented with:
 - **Frontend** (`artifacts/veloce-scm/src/pages/student/module1.tsx`) — Interactive Recharts bubble chart (cost vs quality vs sustainability), demand data table, forecasting inputs, dynamic supplier allocation table, justification textarea, practice/submit with inline results
 - Grading: Forecasting (15pts) + Supplier Selection (12pts) + Cost/Risk Trade-offs (12pts) + Quality+Sustainability (8pts) + Validity+Justification (8pts) = 55 pts max
 
+## Module 2: Operations Planning & MRP (Implemented)
+
+Module 2 is fully implemented. Unlocks only after M1 final submission.
+- **Simulation Engine** (`artifacts/api-server/src/lib/module2Engine.ts`) — 56-day daily production simulation, deterministic Mulberry32 PRNG, reads M1 reliability/lead-time/forecast context. CRITICAL-1: capacity is 800/1,050/1,500 units/day (not 30k-48k). CRITICAL-3: S&OP quality scored vs expected baseline demand.
+- **M1 Context Endpoint**: `GET /api/student/modules/M2/m1-context` — returns M1 avgReliabilityPct, avgLeadTimeDays, forecastA, forecastB
+- **Frontend** (`artifacts/veloce-scm/src/pages/student/module2.tsx`) — M1 data banner, live ComposedChart S&OP visualizer (bars + red capacity reference line, updates as user types), 8-week S&OP table (weekly targets for SKU A + B), 4 policy selects (capacity mode / lot sizing / priority rule / safety stock), justification textarea with character counter, practice/submit with inline results panel
+- **Weekly defaults**: SKU A ~4,200–4,500/week, SKU B ~2,100–2,250/week (matches ~6,400/week demand for overtime mode)
+- Grading: Performance (30pts: Service 15 + Cost 15) + S&OP Quality (10pts) + MRP Logic (8pts) + Justification (5pts) + Validity (2pts) = 55 pts max
+- Routing: `/module/M2` has its own dedicated route in App.tsx (before generic `/module/:key`)
+
 ## API Routes
 
 - `POST /api/auth/register` — Student registration
@@ -76,6 +86,8 @@ Module 1 is fully implemented with:
 
 - `GET /api/student/dashboard` — Student dashboard data (modules, scores, achievements)
 - `GET /api/student/modules/:key` — Module detail + run history
+- `GET /api/student/modules/M1/historical` — Historical demand data for M1
+- `GET /api/student/modules/M2/m1-context` — M1 KPIs for Module 2 (reliability, lead time, forecasts)
 - `POST /api/student/modules/:key/practice` — Run practice simulation
 - `POST /api/student/modules/:key/submit` — Submit final for module
 
