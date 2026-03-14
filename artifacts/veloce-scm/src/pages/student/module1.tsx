@@ -19,8 +19,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   ArrowLeft, Plus, Trash2, Loader2, Trophy, TrendingUp, Package, Truck,
-  History, CheckCircle, AlertTriangle, BarChart3, Globe, Leaf, Star,
+  History, CheckCircle, AlertTriangle, BarChart3, Globe, Leaf, Star, BookOpen,
 } from "lucide-react";
+import { GuideSheet } from "@/components/GuideSheet";
+import { module1Guide } from "@/guides/module1Guide";
 import {
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip as ReTooltip,
   Legend, CartesianGrid, ResponsiveContainer, Cell,
@@ -310,6 +312,8 @@ export default function Module1Page() {
       .catch(() => {});
   }, []);
 
+  const [guideOpen, setGuideOpen] = useState(false);
+
   // ── Form State ──
   const [forecastA, setForecastA] = useState("");
   const [forecastB, setForecastB] = useState("");
@@ -457,6 +461,11 @@ export default function Module1Page() {
           </div>
           <p className="text-muted-foreground">Veloce Wear Manufacturing — Porto, Portugal • 55 points total</p>
         </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => setGuideOpen(true)}>
+            <BookOpen className="w-4 h-4 mr-2" />
+            Student Guide
+          </Button>
         {isSubmitted && moduleData?.finalSubmission && (
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="p-4 flex items-center gap-4">
@@ -468,6 +477,7 @@ export default function Module1Page() {
             </CardContent>
           </Card>
         )}
+        </div>
       </div>
 
       {/* ── Results or Form ── */}
@@ -961,6 +971,13 @@ export default function Module1Page() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <GuideSheet
+        open={guideOpen}
+        onOpenChange={setGuideOpen}
+        content={module1Guide}
+        title="Module 1: Student Guide"
+      />
     </div>
   );
 }
