@@ -227,6 +227,7 @@ function SopChart({
             <CartesianGrid strokeDasharray="3 3" opacity={0.4} />
             <XAxis dataKey="week" />
             <YAxis
+              domain={[0, 12000]}
               tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
               label={{ value: "Units / Week", angle: -90, position: "insideLeft", offset: -5 }}
             />
