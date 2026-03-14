@@ -47,7 +47,10 @@ import {
   Info,
   Leaf,
   BarChart3,
+  BookOpen,
 } from "lucide-react";
+import { GuideSheet } from "@/components/GuideSheet";
+import { module3Guide } from "@/guides/module3Guide";
 import {
   ComposedChart,
   Line,
@@ -177,6 +180,7 @@ export default function Module3Page() {
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<M3Result | null>(null);
   const [runType, setRunType] = useState<"practice" | "final" | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // Load M3 context
   useEffect(() => {
@@ -278,6 +282,10 @@ export default function Module3Page() {
           <h1 className="text-2xl font-bold text-gray-900">Module 3: Distribution Network &amp; Inventory Policy</h1>
           <p className="text-sm text-gray-500">Veloce Wear Global Fulfillment Strategy — 90-Day Simulation</p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setGuideOpen(true)}>
+          <BookOpen className="w-4 h-4 mr-2" />
+          Student Guide
+        </Button>
         {isSubmitted ? (
           <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
             <CheckCircle className="h-3 w-3 mr-1" /> Course Complete
@@ -787,6 +795,13 @@ export default function Module3Page() {
           </CardContent>
         </Card>
       )}
+
+      <GuideSheet
+        open={guideOpen}
+        onOpenChange={setGuideOpen}
+        content={module3Guide}
+        title="Module 3: Student Guide"
+      />
     </div>
   );
 }

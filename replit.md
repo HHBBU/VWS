@@ -31,6 +31,7 @@ A Supply Chain Management course simulation for students and instructors.
 - Secure registration (`.edu` email required, bcrypt passwords)
 - Module locking: M1 always open → M2 requires M1 submission → M3 requires M2 submission
 - Practice runs (unlimited) + final submission (one per module)
+- In-app Student Guide slide-over panel on each module page (BookOpen button → GuideSheet component rendering markdown)
 - Student dashboard with achievement badges
 - Instructor gradebook with search, filter, CSV export
 - Module time windows with per-student extensions

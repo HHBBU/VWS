@@ -45,7 +45,10 @@ import {
   Settings,
   History,
   Info,
+  BookOpen,
 } from "lucide-react";
+import { GuideSheet } from "@/components/GuideSheet";
+import { module2Guide } from "@/guides/module2Guide";
 import {
   ComposedChart,
   Bar,
@@ -455,6 +458,7 @@ export default function Module2Page() {
   const [isPracticing, setIsPracticing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastResult, setLastResult] = useState<SimResult | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [m1Context, setM1Context] = useState<M1Context | null>(null);
 
   // ── Load module status ──
@@ -576,6 +580,10 @@ export default function Module2Page() {
               Veloce Wear Manufacturing — Porto Factory · 56-Day Production Simulation
             </p>
           </div>
+          <Button variant="outline" size="sm" onClick={() => setGuideOpen(true)}>
+            <BookOpen className="w-4 h-4 mr-2" />
+            Student Guide
+          </Button>
           <Badge
             variant={isSubmitted ? "default" : "secondary"}
             className={`text-sm px-3 py-1 ${isSubmitted ? "bg-green-600" : ""}`}
@@ -973,6 +981,13 @@ export default function Module2Page() {
           </CardContent>
         </Card>
       )}
+
+      <GuideSheet
+        open={guideOpen}
+        onOpenChange={setGuideOpen}
+        content={module2Guide}
+        title="Module 2: Student Guide"
+      />
     </div>
   );
 }
