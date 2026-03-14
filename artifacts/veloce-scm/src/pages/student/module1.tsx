@@ -531,9 +531,9 @@ export default function Module1Page() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-primary" /> Historical Demand Data (24 Months)
+                  <TrendingUp className="w-5 h-5 text-primary" /> Historical Demand Data (30 Years)
                 </CardTitle>
-                <CardDescription>Analyse the trend to forecast Month 25 demand for both SKUs</CardDescription>
+                <CardDescription>Analyse the trend to forecast Year 31 demand for both SKUs</CardDescription>
               </CardHeader>
               <CardContent>
                 {historicalData ? (
@@ -542,19 +542,19 @@ export default function Module1Page() {
                       <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4 text-center">
                         <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">SKU A Average</p>
                         <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{historicalData.avgA?.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Trend: +{historicalData.trendA}/month</p>
+                        <p className="text-xs text-muted-foreground mt-1">Trend: +{historicalData.trendA}/year</p>
                       </div>
                       <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4 text-center">
                         <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">SKU B Average</p>
                         <p className="text-3xl font-bold text-green-600 dark:text-green-400">{historicalData.avgB?.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Trend: +{historicalData.trendB}/month</p>
+                        <p className="text-xs text-muted-foreground mt-1">Trend: +{historicalData.trendB}/year</p>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-border">
-                            <th className="text-left p-2 text-muted-foreground font-medium">Month</th>
+                            <th className="text-left p-2 text-muted-foreground font-medium">Year</th>
                             <th className="text-right p-2 text-blue-600 dark:text-blue-400 font-medium">SKU A (Trend Tee)</th>
                             <th className="text-right p-2 text-green-600 dark:text-green-400 font-medium">SKU B (Core Jogger)</th>
                           </tr>
@@ -562,7 +562,7 @@ export default function Module1Page() {
                         <tbody>
                           {(historicalData.dataPoints as any[]).map((d) => (
                             <tr key={d.month} className="border-b border-border/40 hover:bg-muted/30">
-                              <td className="p-2 font-medium">Month {d.month}</td>
+                              <td className="p-2 font-medium">Year {d.month}</td>
                               <td className="p-2 text-right tabular-nums">{d.skuA.toLocaleString()}</td>
                               <td className="p-2 text-right tabular-nums">{d.skuB.toLocaleString()}</td>
                             </tr>
@@ -584,7 +584,7 @@ export default function Module1Page() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-primary" /> 1. Demand Forecasting (Month 25)
+                    <TrendingUp className="w-5 h-5 text-primary" /> 1. Demand Forecasting (Year 31)
                   </CardTitle>
                   <CardDescription>Enter your forecast for each SKU and select your method</CardDescription>
                 </CardHeader>
@@ -618,7 +618,7 @@ export default function Module1Page() {
                         <SelectTrigger><SelectValue placeholder="Select method…" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="linear_regression">Linear Regression</SelectItem>
-                          <SelectItem value="moving_average">Moving Average (3-month)</SelectItem>
+                          <SelectItem value="moving_average">Moving Average (3-year)</SelectItem>
                           <SelectItem value="exponential_smoothing">Exponential Smoothing</SelectItem>
                           <SelectItem value="seasonal_decomposition">Seasonal Decomposition</SelectItem>
                         </SelectContent>
