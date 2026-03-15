@@ -6,22 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, GraduationCap, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showInstructor, setShowInstructor] = useState(false);
   const { login, isLoggingIn } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     login({ data: { email, password } });
-  };
-
-  const fillInstructor = () => {
-    setEmail("instructor@ggc.edu");
-    setPassword("instructor123");
   };
 
   return (
@@ -93,61 +87,6 @@ export default function Login() {
               </Link>
             </div>
           </CardContent>
-        </Card>
-
-        {/* Instructor Portal */}
-        <Card className="border border-amber-200/60 bg-amber-50/40 dark:bg-amber-950/20 dark:border-amber-800/40 shadow-sm">
-          <button
-            type="button"
-            onClick={() => setShowInstructor(!showInstructor)}
-            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-amber-50/60 dark:hover:bg-amber-950/30 transition-colors rounded-xl"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center">
-                <GraduationCap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              </div>
-              <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                Instructor Portal
-              </span>
-            </div>
-            {showInstructor
-              ? <ChevronUp className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              : <ChevronDown className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            }
-          </button>
-
-          {showInstructor && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="px-5 pb-5 space-y-3"
-            >
-              <p className="text-xs text-amber-700/80 dark:text-amber-400/80">
-                Instructors use the same login form above. Use your faculty credentials to access the gradebook and module settings.
-              </p>
-              <div className="rounded-lg bg-amber-100/60 dark:bg-amber-900/30 border border-amber-200/60 dark:border-amber-700/40 p-3 space-y-1.5 font-mono text-xs text-amber-900 dark:text-amber-200">
-                <div className="flex justify-between">
-                  <span className="text-amber-600 dark:text-amber-400">Email:</span>
-                  <span>instructor@ggc.edu</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-amber-600 dark:text-amber-400">Password:</span>
-                  <span>instructor123</span>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={fillInstructor}
-                className="w-full border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-100/60 dark:hover:bg-amber-900/30 text-xs"
-              >
-                Fill in instructor credentials
-              </Button>
-            </motion.div>
-          )}
         </Card>
       </motion.div>
     </div>
