@@ -63,6 +63,16 @@ export default function StudentDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <h2 className="text-2xl font-display font-bold">Simulation Modules</h2>
+
+          {/* How-this-works banner */}
+          <div className="rounded-xl border border-border bg-muted/40 px-5 py-3.5 text-sm text-muted-foreground leading-relaxed">
+            <strong className="text-foreground">How this works:</strong>{" "}
+            Run unlimited practice simulations to learn and improve.
+            Submit one final per module (locks permanently).
+            Modules unlock in order: M1 → M2 → M3.
+            Total points: <strong className="text-foreground">165</strong>.
+          </div>
+
           <div className="grid gap-6">
             {data.modules.map((mod, i) => {
               const statusCfg = getStatusConfig(mod.status);
@@ -121,6 +131,15 @@ export default function StudentDashboard() {
                 </motion.div>
               );
             })}
+          </div>
+
+          {/* Status legend */}
+          <div className="text-xs text-muted-foreground leading-relaxed pt-1">
+            <strong className="text-foreground">Status guide: </strong>
+            <strong>Locked</strong> = prerequisite not submitted or module window closed ·{" "}
+            <strong>Not started</strong> = no runs yet ·{" "}
+            <strong>In progress</strong> = practice runs exist ·{" "}
+            <strong>Submitted</strong> = final submitted (read-only)
           </div>
         </div>
 

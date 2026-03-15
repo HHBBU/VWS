@@ -1,0 +1,162 @@
+# REPLIT PROMPT — Embed Student Intro + Dashboard Text
+
+Copy-paste this entire prompt into your Replit AI assistant. It updates only HTML templates — no Python changes.
+
+---
+
+## PROMPT START
+
+I need to update several template files with polished student-facing text. Only change HTML content inside Jinja2 block tags. Do not modify any Python routes, logic, or imports.
+
+### 1. Update `templates/public/intro.html`
+
+Replace the current content inside `{% block content %}` with the following intro page. Keep the `{% extends "base.html" %}` wrapper and all block tags intact.
+
+**Content to insert:**
+
+```html
+<div class="module-container">
+    <div class="glass-panel">
+        <h1>Veloce Wear Supply Chain Simulation</h1>
+        <h3>How the Simulation Works (Read This First)</h3>
+        
+        <p>Welcome to <strong>Veloce Wear</strong> — a fast-fashion apparel company competing on speed, quality, availability, and responsible sourcing. You are joining the supply chain leadership team. Your job is to make realistic, data-driven decisions across three modules — then learn from the results as uncertainty and trade-offs unfold.</p>
+        
+        <p>This is a <strong>3-module simulation sequence</strong>. Each module builds on the one before it, just like a real end-to-end supply chain.</p>
+    </div>
+
+    <div class="glass-panel">
+        <h2>What You'll Complete</h2>
+        <p><strong>Total: 165 points across 3 modules</strong></p>
+        <table class="data-table">
+            <thead>
+                <tr><th>Module</th><th>Role</th><th>Points</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Module 1</strong> — Global Sourcing & Procurement</td><td>Forecast demand, select suppliers, design inbound supply strategy</td><td>55</td></tr>
+                <tr><td><strong>Module 2</strong> — Operations Planning & MRP</td><td>Plan production, manage capacity, balance service vs cost vs markdown</td><td>55</td></tr>
+                <tr><td><strong>Module 3</strong> — Distribution Network & Inventory</td><td>Design distribution network, set inventory policies, manage fulfillment</td><td>55</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="glass-panel">
+        <h2>How to Access the Simulation</h2>
+        <p><strong>Account rules:</strong> Register and log in using a <strong>.edu email address</strong> (required). Your account is tied to your Student ID for grading integrity and reproducibility.</p>
+        <p><strong>Module introductions:</strong> Each module has a Module Introduction Page available before and after login. Read the intro before starting — it explains the scenario, decisions, and scoring.</p>
+    </div>
+
+    <div class="glass-panel" style="border-left: 4px solid #ef4444;">
+        <h2>⚠️ Practice vs Final Submission</h2>
+        <p><strong>Practice runs:</strong> Unlimited. Instant feedback (score + KPI dashboard). Use them to test strategies and improve. All runs are saved.</p>
+        <p><strong>Final submission:</strong> One attempt only. Once you click Submit Final, the module locks permanently — no resubmissions. Your score appears on the dashboard and the next module unlocks.</p>
+    </div>
+
+    <div class="glass-panel">
+        <h2>Module Unlock Sequence</h2>
+        <p>Modules unlock in order. You cannot skip ahead.</p>
+        <p style="text-align: center; font-size: 16px; line-height: 2;">
+            <strong>Module 1</strong> opens first<br>
+            ↓ submit M1 final<br>
+            <strong>Module 2</strong> unlocks<br>
+            ↓ submit M2 final<br>
+            <strong>Module 3</strong> unlocks<br>
+            ↓ submit M3 final<br>
+            <strong>Course complete!</strong>
+        </p>
+    </div>
+
+    <div class="glass-panel">
+        <h2>Timing: Module Windows & Extensions</h2>
+        <p>Each module has an official start and end date (the "module window"). If the window is closed, you cannot run or submit. Extensions are available per-student — contact the instructor early with your Student ID.</p>
+    </div>
+
+    <div class="glass-panel">
+        <h2>What Strong Performance Looks Like</h2>
+        <p>This is not a "guess the trick" game. There is no single correct answer. Strong submissions show:</p>
+        <p><strong>Data-driven planning</strong> — use the provided data and analytics tools<br>
+        <strong>Trade-off reasoning</strong> — discuss cost vs service vs inventory vs risk vs sustainability<br>
+        <strong>Operational realism</strong> — account for lead times, capacity constraints, variability<br>
+        <strong>Clear written justification</strong> — explain your logic, reference KPIs, link to company mission</p>
+    </div>
+
+    <div class="glass-panel">
+        <h2>What to Do Next</h2>
+        <p>1. <strong>Create your account</strong> using your .edu email<br>
+        2. Go to your <strong>Student Dashboard</strong> and open <strong>Module 1</strong><br>
+        3. Read the <strong>Module 1 Introduction</strong>, run practice simulations, then submit final when ready<br>
+        4. Repeat for Modules 2 and 3</p>
+        <p><em>Your goal is to think like a supply chain professional — not just play with numbers. Good luck!</em></p>
+    </div>
+</div>
+```
+
+### 2. Update `templates/student/dashboard.html`
+
+Add this banner **above** the module cards (inside `{% block content %}`, before the module loop):
+
+```html
+<div class="glass-panel" style="margin-bottom: 24px; padding: 16px 24px;">
+    <p style="margin: 0; font-size: 14px; color: var(--text-muted); line-height: 1.8;">
+        <strong>How this works:</strong> 
+        Run unlimited practice simulations to learn and improve. 
+        Submit one final per module (locks permanently). 
+        Modules unlock in order: M1 → M2 → M3. 
+        Total points: <strong>165</strong>.
+    </p>
+</div>
+```
+
+Add this status legend **below** the module cards:
+
+```html
+<div style="font-size: 12px; color: var(--text-muted); margin-top: 16px; line-height: 1.8;">
+    <strong>Status guide:</strong>
+    <strong>Locked</strong> = prerequisite not submitted or module window closed · 
+    <strong>Not started</strong> = no runs yet · 
+    <strong>In progress</strong> = practice runs exist · 
+    <strong>Submitted</strong> = final submitted (read-only)
+</div>
+```
+
+### 3. Update `templates/public/module_intro.html`
+
+Replace the current content inside `{% block content %}` with conditional blurbs per module. Keep `{% extends "base.html" %}` intact.
+
+```html
+<div class="module-container">
+    <div class="glass-panel">
+        <h1>{{ module_title }}</h1>
+        
+        {% if module_key == 'M1' %}
+        <p>You are the <strong>Global Sourcing Manager</strong> preparing Veloce Wear's next production cycle. You will analyze historical demand data, forecast future demand, translate forecasts into material requirements (kg), evaluate 8 global suppliers using a formal MCDA method, select transportation modes, and balance cost vs lead time vs reliability vs sustainability and quality.</p>
+        <p>Your sourcing decisions set the foundation for the entire supply chain. The suppliers you choose, the reliability you achieve, and the lead times you accept all carry forward into Module 2.</p>
+        <p><strong>Key decisions:</strong> Demand forecast, supplier selection and allocation, transport mode, assurance package, batching strategy, optional market intelligence report.</p>
+        
+        {% elif module_key == 'M2' %}
+        <p>You are the <strong>Operations Planning Manager</strong> at Veloce Wear's Porto manufacturing campus. You will build an 8-week S&OP production plan, choose a capacity mode, select lot-sizing and safety stock policies, and manage the tension between service level, cost, and markdown risk.</p>
+        <p>Your Module 1 supplier reliability determines how often material disruptions interrupt production. Poor M1 decisions make M2 harder. The Visual S&OP Dashboard helps you check your plan against capacity limits in real time.</p>
+        <p><strong>Key decisions:</strong> Weekly production targets (8 weeks × 2 SKUs), capacity mode, lot sizing, priority rule, safety stock policy.</p>
+        
+        {% elif module_key == 'M3' %}
+        <p>You are the <strong>Distribution Strategy Lead</strong> designing how finished goods flow from Porto to 420 stores across EU, North America, and APAC. You will choose a network structure (centralized, hybrid, or decentralized), set inventory replenishment policies (ROP and Q), and select a shipping service mode.</p>
+        <p>Your Module 2 service level affects lead time variability in M3 — poor production performance creates wider delivery windows. The Interactive ROP/Q Visualizer helps you calibrate inventory policies before running the stochastic simulation.</p>
+        <p><strong>Key decisions:</strong> Network strategy, reorder point (ROP), order quantity (Q), service mode, forecast method.</p>
+        {% endif %}
+        
+        <div style="margin-top: 20px;">
+            <a href="{{ url_for('public.login') }}" class="btn btn-primary">Log In to Start</a>
+            <a href="{{ url_for('public.intro') }}" class="btn btn-secondary" style="margin-left: 10px;">Back to Overview</a>
+        </div>
+    </div>
+</div>
+```
+
+### What NOT to change
+
+- Do not modify any Python files (app.py, routes, engines)
+- Do not change database schema or logic
+- Do not change CSS files (use existing glass-panel, data-table, btn classes)
+- Do not change the base.html template structure
+
+## PROMPT END
