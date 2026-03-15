@@ -25,7 +25,7 @@ export default function Home() {
             className="inline-flex items-center px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-sm font-medium mb-8"
           >
             <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse" />
-            SCM 4330 Fall Semester Live
+            SCM 4330 Supply Chain Management Applications
           </motion.div>
           
           <motion.h1 
