@@ -168,10 +168,36 @@ export const GetGradebookResponse = zod.object({
       m3Score: zod.number(),
       m3Submitted: zod.string().nullish(),
       total: zod.number(),
+      m1Status: zod.enum(["not_started", "in_progress", "submitted"]),
+      m2Status: zod.enum(["not_started", "in_progress", "submitted"]),
+      m3Status: zod.enum(["not_started", "in_progress", "submitted"]),
     }),
   ),
   sections: zod.array(zod.string()),
   totalStudents: zod.number(),
+});
+
+/**
+ * @summary Get instructor analytics data
+ */
+export const GetInstructorAnalyticsResponse = zod.object({
+  totalStudents: zod.number(),
+  completionRate: zod.number(),
+  avgTotalScore: zod.number(),
+  moduleCompletion: zod.array(
+    zod.object({
+      moduleKey: zod.string(),
+      notStarted: zod.number(),
+      inProgress: zod.number(),
+      submitted: zod.number(),
+    }),
+  ),
+  gradeDistribution: zod.array(
+    zod.object({
+      grade: zod.string(),
+      count: zod.number(),
+    }),
+  ),
 });
 
 /**

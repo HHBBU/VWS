@@ -5,6 +5,9 @@
  * Veloce Wear SCM Simulation API
  * OpenAPI spec version: 0.1.0
  */
+import type { StudentGradeRowM1Status } from "./studentGradeRowM1Status";
+import type { StudentGradeRowM2Status } from "./studentGradeRowM2Status";
+import type { StudentGradeRowM3Status } from "./studentGradeRowM3Status";
 
 export interface StudentGradeRow {
   id: number;
@@ -19,4 +22,7 @@ export interface StudentGradeRow {
   m3Score: number;
   m3Submitted?: string | null;
   total: number;
+  m1Status: StudentGradeRowM1Status;
+  m2Status: StudentGradeRowM2Status;
+  m3Status: StudentGradeRowM3Status;
 }

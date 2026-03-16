@@ -5,12 +5,14 @@ import {
   moduleSettingsTable,
   moduleExtensionsTable,
   moduleSubmissionsTable,
+  simulationRunsTable,
 } from "@workspace/db/schema";
 import { and, eq, or, ilike } from "drizzle-orm";
 import {
   GetGradebookResponse as GradebookDataSchema,
   GetSettingsResponse as SettingsDataSchema,
   UpdateModuleWindowsResponse as MessageResponseSchema,
+  GetInstructorAnalyticsResponse as AnalyticsDataSchema,
 } from "@workspace/api-zod";
 
 const ErrorResponseSchema = { parse: (v: any) => v };
@@ -56,6 +58,15 @@ router.get("/gradebook", requireInstructor, async (req: Request, res: Response) 
   }
 
   const allSubmissions = await db.select().from(moduleSubmissionsTable);
+  const allRuns = await db.select().from(simulationRunsTable);
+
+  function getModuleStatus(userId: number, moduleKey: string, submissions: typeof allSubmissions, runs: typeof allRuns): "not_started" | "in_progress" | "submitted" {
+    const sub = submissions.find((s) => s.userId === userId && s.moduleKey === moduleKey);
+    if (sub?.submittedAt) return "submitted";
+    const hasRuns = runs.some((r) => r.userId === userId && r.moduleKey === moduleKey);
+    if (hasRuns) return "in_progress";
+    return "not_started";
+  }
 
   const rows = students.map((student) => {
     const subs = allSubmissions.filter((s) => s.userId === student.id);
@@ -80,6 +91,9 @@ router.get("/gradebook", requireInstructor, async (req: Request, res: Response) 
       m3Score,
       m3Submitted: m3?.submittedAt?.toISOString() ?? null,
       total: m1Score + m2Score + m3Score,
+      m1Status: getModuleStatus(student.id, "M1", allSubmissions, allRuns),
+      m2Status: getModuleStatus(student.id, "M2", allSubmissions, allRuns),
+      m3Status: getModuleStatus(student.id, "M3", allSubmissions, allRuns),
     };
   });
 
@@ -97,6 +111,105 @@ router.get("/gradebook", requireInstructor, async (req: Request, res: Response) 
       students: rows,
       sections,
       totalStudents: rows.length,
+    }),
+  );
+});
+
+router.get("/analytics", requireInstructor, async (req: Request, res: Response) => {
+  const allStudents = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(eq(usersTable.role, "student"));
+
+  const totalStudents = allStudents.length;
+
+  const allSubmissions = await db.select().from(moduleSubmissionsTable);
+  const allRuns = await db.select().from(simulationRunsTable);
+
+  const moduleKeys = ["M1", "M2", "M3"] as const;
+
+  const moduleCompletion = moduleKeys.map((moduleKey) => {
+    let notStarted = 0;
+    let inProgress = 0;
+    let submitted = 0;
+
+    for (const student of allStudents) {
+      const sub = allSubmissions.find(
+        (s) => s.userId === student.id && s.moduleKey === moduleKey,
+      );
+      if (sub?.submittedAt) {
+        submitted++;
+      } else {
+        const hasRuns = allRuns.some(
+          (r) => r.userId === student.id && r.moduleKey === moduleKey,
+        );
+        if (hasRuns) {
+          inProgress++;
+        } else {
+          notStarted++;
+        }
+      }
+    }
+
+    return { moduleKey, notStarted, inProgress, submitted };
+  });
+
+  let fullyComplete = 0;
+  let totalScoreSum = 0;
+  let scoredStudentCount = 0;
+
+  function letterGrade(total: number): string {
+    const pct = (total / 165) * 100;
+    if (pct >= 90) return "A";
+    if (pct >= 80) return "B";
+    if (pct >= 70) return "C";
+    if (pct >= 60) return "D";
+    return "F";
+  }
+
+  const gradeBuckets: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+
+  for (const student of allStudents) {
+    const studentSubs = allSubmissions.filter((s) => s.userId === student.id);
+    const hasAllThree = moduleKeys.every((mk) =>
+      studentSubs.some((s) => s.moduleKey === mk && s.submittedAt),
+    );
+    if (hasAllThree) {
+      fullyComplete++;
+
+      const m1Score =
+        studentSubs.find((s) => s.moduleKey === "M1")?.score ?? 0;
+      const m2Score =
+        studentSubs.find((s) => s.moduleKey === "M2")?.score ?? 0;
+      const m3Score =
+        studentSubs.find((s) => s.moduleKey === "M3")?.score ?? 0;
+      const studentTotal = m1Score + m2Score + m3Score;
+
+      totalScoreSum += studentTotal;
+      scoredStudentCount++;
+
+      const grade = letterGrade(studentTotal);
+      gradeBuckets[grade]++;
+    }
+  }
+
+  const completionRate =
+    totalStudents > 0 ? (fullyComplete / totalStudents) * 100 : 0;
+  const avgTotalScore =
+    scoredStudentCount > 0 ? totalScoreSum / scoredStudentCount : 0;
+
+  const gradeDistribution = ["A", "B", "C", "D", "F"].map((grade) => ({
+    grade,
+    count: gradeBuckets[grade],
+  }));
+
+  return res.json(
+    AnalyticsDataSchema.parse({
+      totalStudents,
+      completionRate: Math.round(completionRate * 10) / 10,
+      avgTotalScore: Math.round(avgTotalScore * 10) / 10,
+      moduleCompletion,
+      gradeDistribution,
     }),
   );
 });

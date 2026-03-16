@@ -24,6 +24,7 @@ import type {
   GetGradebookParams,
   GradebookData,
   HealthStatus,
+  InstructorAnalyticsData,
   LoginRequest,
   MessageResponse,
   ModuleData,
@@ -863,6 +864,82 @@ export function useGetGradebook<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetGradebookQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get instructor analytics data
+ */
+export const getGetInstructorAnalyticsUrl = () => {
+  return `/api/instructor/analytics`;
+};
+
+export const getInstructorAnalytics = async (
+  options?: RequestInit,
+): Promise<InstructorAnalyticsData> => {
+  return customFetch<InstructorAnalyticsData>(getGetInstructorAnalyticsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetInstructorAnalyticsQueryKey = () => {
+  return [`/api/instructor/analytics`] as const;
+};
+
+export const getGetInstructorAnalyticsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getInstructorAnalytics>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getInstructorAnalytics>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetInstructorAnalyticsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getInstructorAnalytics>>
+  > = ({ signal }) => getInstructorAnalytics({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getInstructorAnalytics>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetInstructorAnalyticsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getInstructorAnalytics>>
+>;
+export type GetInstructorAnalyticsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get instructor analytics data
+ */
+
+export function useGetInstructorAnalytics<
+  TData = Awaited<ReturnType<typeof getInstructorAnalytics>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getInstructorAnalytics>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetInstructorAnalyticsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

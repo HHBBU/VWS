@@ -245,6 +245,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /instructor/analytics:
+    get:
+      operationId: getInstructorAnalytics
+      tags: [instructor]
+      summary: Get instructor analytics data
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstructorAnalyticsData"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /instructor/gradebook/export:
     get:
       operationId: exportGradebook
@@ -532,7 +551,16 @@ components:
           nullable: true
         total:
           type: integer
-      required: [id, name, email, studentId, section, m1Score, m2Score, m3Score, total]
+        m1Status:
+          type: string
+          enum: [not_started, in_progress, submitted]
+        m2Status:
+          type: string
+          enum: [not_started, in_progress, submitted]
+        m3Status:
+          type: string
+          enum: [not_started, in_progress, submitted]
+      required: [id, name, email, studentId, section, m1Score, m2Score, m3Score, total, m1Status, m2Status, m3Status]
 
     GradebookData:
       type: object
@@ -625,3 +653,46 @@ components:
         note:
           type: string
       required: [studentId, moduleKey, extendedEnd]
+
+    ModuleCompletionCounts:
+      type: object
+      properties:
+        moduleKey:
+          type: string
+        notStarted:
+          type: integer
+        inProgress:
+          type: integer
+        submitted:
+          type: integer
+      required: [moduleKey, notStarted, inProgress, submitted]
+
+    GradeDistributionBucket:
+      type: object
+      properties:
+        grade:
+          type: string
+        count:
+          type: integer
+      required: [grade, count]
+
+    InstructorAnalyticsData:
+      type: object
+      properties:
+        totalStudents:
+          type: integer
+        completionRate:
+          type: number
+          format: float
+        avgTotalScore:
+          type: number
+          format: float
+        moduleCompletion:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModuleCompletionCounts"
+        gradeDistribution:
+          type: array
+          items:
+            $ref: "#/components/schemas/GradeDistributionBucket"
+      required: [totalStudents, completionRate, avgTotalScore, moduleCompletion, gradeDistribution]

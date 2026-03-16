@@ -120,6 +120,33 @@ export interface RunResult {
   message: string;
 }
 
+export type StudentGradeRowM1Status =
+  (typeof StudentGradeRowM1Status)[keyof typeof StudentGradeRowM1Status];
+
+export const StudentGradeRowM1Status = {
+  not_started: "not_started",
+  in_progress: "in_progress",
+  submitted: "submitted",
+} as const;
+
+export type StudentGradeRowM2Status =
+  (typeof StudentGradeRowM2Status)[keyof typeof StudentGradeRowM2Status];
+
+export const StudentGradeRowM2Status = {
+  not_started: "not_started",
+  in_progress: "in_progress",
+  submitted: "submitted",
+} as const;
+
+export type StudentGradeRowM3Status =
+  (typeof StudentGradeRowM3Status)[keyof typeof StudentGradeRowM3Status];
+
+export const StudentGradeRowM3Status = {
+  not_started: "not_started",
+  in_progress: "in_progress",
+  submitted: "submitted",
+} as const;
+
 export interface StudentGradeRow {
   id: number;
   name: string;
@@ -133,6 +160,9 @@ export interface StudentGradeRow {
   m3Score: number;
   m3Submitted?: string | null;
   total: number;
+  m1Status: StudentGradeRowM1Status;
+  m2Status: StudentGradeRowM2Status;
+  m3Status: StudentGradeRowM3Status;
 }
 
 export interface GradebookData {
@@ -179,6 +209,26 @@ export interface AddExtensionRequest {
   moduleKey: string;
   extendedEnd: string;
   note?: string;
+}
+
+export interface ModuleCompletionCounts {
+  moduleKey: string;
+  notStarted: number;
+  inProgress: number;
+  submitted: number;
+}
+
+export interface GradeDistributionBucket {
+  grade: string;
+  count: number;
+}
+
+export interface InstructorAnalyticsData {
+  totalStudents: number;
+  completionRate: number;
+  avgTotalScore: number;
+  moduleCompletion: ModuleCompletionCounts[];
+  gradeDistribution: GradeDistributionBucket[];
 }
 
 export type GetGradebookParams = {
