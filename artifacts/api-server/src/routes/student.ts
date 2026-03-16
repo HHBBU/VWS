@@ -5,7 +5,7 @@ import {
   simulationRunsTable,
   moduleSubmissionsTable,
 } from "@workspace/db/schema";
-import { and, eq, desc, count } from "drizzle-orm";
+import { and, eq, desc, asc, count } from "drizzle-orm";
 import {
   getModuleWindowStatus,
   getModuleWindowInfo,
@@ -27,6 +27,14 @@ import { runModule3Simulation, type M3Decisions } from "../lib/module3Engine";
 import { getHistoricalData } from "../lib/historicalData";
 
 const ErrorResponseSchema = { parse: (v: any) => v };
+
+function scoreToLetterGrade(score: number): string {
+  if (score >= 50) return "A";
+  if (score >= 44) return "B";
+  if (score >= 38) return "C";
+  if (score >= 30) return "D";
+  return "F";
+}
 
 const router: IRouter = Router();
 
@@ -58,8 +66,8 @@ router.get("/dashboard", requireStudent, async (req: Request, res: Response) => 
       const isUnlocked = await moduleIsUnlocked(userId, key);
       const windowInfo = await getModuleWindowInfo(userId, key);
 
-      const [practiceRunRow] = await db
-        .select({ count: count() })
+      const practiceRuns = await db
+        .select({ score: simulationRunsTable.score })
         .from(simulationRunsTable)
         .where(
           and(
@@ -67,7 +75,8 @@ router.get("/dashboard", requireStudent, async (req: Request, res: Response) => 
             eq(simulationRunsTable.moduleKey, key),
             eq(simulationRunsTable.isFinal, false),
           ),
-        );
+        )
+        .orderBy(asc(simulationRunsTable.runNumber));
 
       return {
         key,
@@ -78,7 +87,8 @@ router.get("/dashboard", requireStudent, async (req: Request, res: Response) => 
         isUnlocked,
         score: submission?.score ?? null,
         submittedAt: submission?.submittedAt?.toISOString() ?? null,
-        practiceRunCount: practiceRunRow?.count ?? 0,
+        practiceRunCount: practiceRuns.length,
+        practiceRunScores: practiceRuns.map((r) => r.score),
         windowStart: windowInfo.windowStart,
         windowEnd: windowInfo.windowEnd,
         windowEnabled: windowInfo.windowEnabled,
@@ -137,8 +147,7 @@ router.get("/modules/:moduleKey", requireStudent, async (req: Request, res: Resp
         eq(simulationRunsTable.moduleKey, key),
       ),
     )
-    .orderBy(desc(simulationRunsTable.runNumber))
-    .limit(10);
+    .orderBy(asc(simulationRunsTable.runNumber));
 
   const [practiceCountRow] = await db
     .select({ count: count() })
@@ -166,6 +175,7 @@ router.get("/modules/:moduleKey", requireStudent, async (req: Request, res: Resp
       recentRuns: runs.map((r) => ({
         runNumber: r.runNumber,
         score: r.score,
+        letterGrade: scoreToLetterGrade(r.score),
         isFinal: r.isFinal,
         createdAt: r.createdAt.toISOString(),
       })),

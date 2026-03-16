@@ -48,6 +48,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { GuideSheet } from "@/components/GuideSheet";
+import { RunHistoryPanel } from "@/components/RunHistoryPanel";
 import { module2Guide } from "@/guides/module2Guide";
 import {
   ComposedChart,
@@ -961,55 +962,8 @@ export default function Module2Page() {
         {lastResult && <ResultsPanel result={lastResult} />}
       </AnimatePresence>
 
-      {/* ── Practice Run History ── */}
       {recentRuns.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <History className="w-4 h-4 text-slate-600" />
-              Practice Run History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-slate-600">
-                    <th className="text-left py-2 font-medium">Run #</th>
-                    <th className="text-center py-2 font-medium">Score</th>
-                    <th className="text-left py-2 font-medium">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentRuns.map((run: any) => (
-                    <tr key={run.runNumber} className="border-b last:border-0 hover:bg-slate-50">
-                      <td className="py-2">Run #{run.runNumber}</td>
-                      <td className="py-2 text-center">
-                        <Badge
-                          variant="outline"
-                          className={
-                            run.score >= 50
-                              ? "border-green-500 text-green-700"
-                              : run.score >= 44
-                              ? "border-blue-500 text-blue-700"
-                              : "border-slate-400"
-                          }
-                        >
-                          {run.score} / 55
-                        </Badge>
-                      </td>
-                      <td className="py-2 text-slate-500 text-xs">
-                        {run.createdAt
-                          ? format(new Date(run.createdAt), "MMM d, yyyy · h:mm a")
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        <RunHistoryPanel runs={recentRuns} />
       )}
 
       <GuideSheet

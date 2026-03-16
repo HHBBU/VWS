@@ -50,6 +50,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { GuideSheet } from "@/components/GuideSheet";
+import { RunHistoryPanel } from "@/components/RunHistoryPanel";
 import { module3Guide } from "@/guides/module3Guide";
 import {
   ComposedChart,
@@ -800,30 +801,8 @@ export default function Module3Page() {
         )}
       </AnimatePresence>
 
-      {/* ── PRACTICE RUN HISTORY ── */}
       {moduleData && moduleData.recentRuns.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <History className="h-4 w-4" /> Practice Run History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y text-sm">
-              {moduleData.recentRuns
-                .filter((r) => !r.isFinal)
-                .map((run) => (
-                  <div key={run.runNumber} className="flex items-center justify-between py-2">
-                    <span className="text-gray-600">Run #{run.runNumber}</span>
-                    <span className="font-semibold">{run.score}/55</span>
-                    <span className="text-gray-400 text-xs">
-                      {format(new Date(run.createdAt), "MMM d, h:mm a")}
-                    </span>
-                  </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
+        <RunHistoryPanel runs={moduleData.recentRuns} />
       )}
 
       <GuideSheet

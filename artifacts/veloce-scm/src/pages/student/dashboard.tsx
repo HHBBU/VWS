@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Trophy, Lock, PlayCircle, CheckCircle2, AlertCircle, Award, Star, Clock, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, differenceInDays, isPast, isFuture } from "date-fns";
+import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts";
 
 export default function StudentDashboard() {
   const { data, isLoading, error } = useGetStudentDashboard();
@@ -155,6 +156,22 @@ export default function StudentDashboard() {
                           )}
                           <div className="flex items-center gap-2">
                             <span>Practice Runs: <strong className="text-foreground">{mod.practiceRunCount}</strong></span>
+                            {mod.practiceRunScores && mod.practiceRunScores.length >= 2 && (
+                              <div className="w-20 h-6 ml-1">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <LineChart data={mod.practiceRunScores.map((s: number, i: number) => ({ i, s }))}>
+                                    <YAxis domain={[0, 55]} hide />
+                                    <Line
+                                      type="monotone"
+                                      dataKey="s"
+                                      stroke="hsl(var(--primary))"
+                                      strokeWidth={1.5}
+                                      dot={false}
+                                    />
+                                  </LineChart>
+                                </ResponsiveContainer>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

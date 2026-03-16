@@ -83,6 +83,7 @@ export const GetStudentDashboardResponse = zod.object({
       windowStart: zod.string().nullish(),
       windowEnd: zod.string().nullish(),
       windowEnabled: zod.boolean(),
+      practiceRunScores: zod.array(zod.number()),
     }),
   ),
   totalScore: zod.number(),
@@ -113,6 +114,7 @@ export const GetModuleDataResponse = zod.object({
     zod.object({
       runNumber: zod.number(),
       score: zod.number(),
+      letterGrade: zod.string(),
       isFinal: zod.boolean(),
       createdAt: zod.string(),
     }),

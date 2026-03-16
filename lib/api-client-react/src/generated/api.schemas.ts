@@ -84,6 +84,7 @@ export interface ModuleInfo {
   windowStart?: string | null;
   windowEnd?: string | null;
   windowEnabled: boolean;
+  practiceRunScores: number[];
 }
 
 export interface DashboardData {
@@ -97,6 +98,7 @@ export interface DashboardData {
 export interface SimulationRun {
   runNumber: number;
   score: number;
+  letterGrade: string;
   isFinal: boolean;
   createdAt: string;
 }

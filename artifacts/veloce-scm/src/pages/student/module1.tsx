@@ -22,6 +22,7 @@ import {
   History, CheckCircle, AlertTriangle, BarChart3, Globe, Leaf, Star, BookOpen,
 } from "lucide-react";
 import { GuideSheet } from "@/components/GuideSheet";
+import { RunHistoryPanel } from "@/components/RunHistoryPanel";
 import { module1Guide } from "@/guides/module1Guide";
 import {
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip as ReTooltip,
@@ -962,45 +963,15 @@ export default function Module1Page() {
               )}
             </div>
 
-            {/* ── Practice Run History ── */}
-            {(moduleData?.recentRuns?.length ?? 0) > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <History className="w-4 h-4" /> Practice Run History
-                  </CardTitle>
-                  <CardDescription>{moduleData?.practiceCount} total runs</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {moduleData?.recentRuns.map((run, i) => (
-                      <motion.div
-                        key={run.runNumber}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.04 }}
-                        className={`flex items-center justify-between p-3 rounded-lg border ${run.isFinal ? "bg-primary/5 border-primary/20" : "bg-muted/30 border-border/50"}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="font-semibold text-sm">Run #{run.runNumber}</span>
-                          {run.isFinal && <Badge className="text-[10px] h-4 px-1.5">FINAL</Badge>}
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(run.createdAt), "MMM d, h:mm a")}
-                          </span>
-                        </div>
-                        <span className={`font-bold ${run.isFinal ? "text-primary" : ""}`}>
-                          {run.score} pts
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
           </motion.div>
         )}
       </AnimatePresence>
+
+      {moduleData && moduleData.recentRuns.length > 0 && (
+        <div className="mt-8">
+          <RunHistoryPanel runs={moduleData.recentRuns} />
+        </div>
+      )}
 
       <GuideSheet
         open={guideOpen}

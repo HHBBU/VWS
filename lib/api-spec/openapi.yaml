@@ -457,7 +457,11 @@ components:
           nullable: true
         windowEnabled:
           type: boolean
-      required: [key, title, maxScore, status, window, isUnlocked, practiceRunCount, windowEnabled]
+        practiceRunScores:
+          type: array
+          items:
+            type: integer
+      required: [key, title, maxScore, status, window, isUnlocked, practiceRunCount, windowEnabled, practiceRunScores]
 
     DashboardData:
       type: object
@@ -483,11 +487,13 @@ components:
           type: integer
         score:
           type: integer
+        letterGrade:
+          type: string
         isFinal:
           type: boolean
         createdAt:
           type: string
-      required: [runNumber, score, isFinal, createdAt]
+      required: [runNumber, score, letterGrade, isFinal, createdAt]
 
     ModuleData:
       type: object
