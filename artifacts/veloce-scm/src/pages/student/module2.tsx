@@ -464,7 +464,7 @@ export default function Module2Page() {
 
   // ── Load module status ──
   const { data: moduleData, isLoading } = useGetModuleData("M2", {
-    query: { retry: false },
+    query: { queryKey: getGetModuleDataQueryKey("M2"), retry: false },
   });
 
   // ── Load M1 context ──
@@ -476,7 +476,7 @@ export default function Module2Page() {
       .catch(() => {});
   }, []);
 
-  const isSubmitted = moduleData?.isLocked ?? false;
+  const isSubmitted = moduleData?.isSubmitted ?? false;
   const recentRuns = moduleData?.recentRuns ?? [];
 
   // ── Helpers ──

@@ -379,7 +379,7 @@ export default function Module3Page() {
                 <p className="font-bold text-emerald-800">🎓 Congratulations — Course Complete!</p>
                 <p className="text-sm text-emerald-700">
                   Module 3 Final Score: <strong>{moduleData.finalSubmission.score}/55</strong> ·
-                  Submitted {format(new Date(moduleData.finalSubmission.submittedAt), "MMM d, yyyy 'at' h:mm a")}
+                  Submitted {moduleData.finalSubmission.submittedAt ? format(new Date(moduleData.finalSubmission.submittedAt), "MMM d, yyyy 'at' h:mm a") : ""}
                 </p>
               </div>
             </div>

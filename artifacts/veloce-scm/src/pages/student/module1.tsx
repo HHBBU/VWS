@@ -301,7 +301,7 @@ export default function Module1Page() {
   const queryClient = useQueryClient();
 
   const { data: moduleData, isLoading } = useGetModuleData("M1", {
-    query: { enabled: true }
+    query: { queryKey: getGetModuleDataQueryKey("M1"), enabled: true }
   });
 
   // ── Historical data ──

@@ -26,7 +26,7 @@ function requireInstructor(req: Request, res: Response, next: () => void) {
   if (req.session.userRole !== "instructor") {
     return res.status(403).json(ErrorResponseSchema.parse({ error: "Instructor access only" }));
   }
-  next();
+  return next();
 }
 
 router.get("/gradebook", requireInstructor, async (req: Request, res: Response) => {
@@ -367,7 +367,7 @@ router.post("/extensions", requireInstructor, async (req: Request, res: Response
 });
 
 router.delete("/extensions/:extensionId", requireInstructor, async (req: Request, res: Response) => {
-  const id = parseInt(req.params.extensionId, 10);
+  const id = parseInt(req.params.extensionId as string, 10);
 
   if (isNaN(id)) {
     return res.status(400).json(ErrorResponseSchema.parse({ error: "Invalid extension ID" }));

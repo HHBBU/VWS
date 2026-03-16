@@ -16,6 +16,7 @@ export function useAuth() {
 
   const { data: user, isLoading, error } = useGetCurrentUser({
     query: {
+      queryKey: getGetCurrentUserQueryKey(),
       retry: false,
       staleTime: Infinity,
     }

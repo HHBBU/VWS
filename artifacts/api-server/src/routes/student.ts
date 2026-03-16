@@ -45,7 +45,7 @@ function requireStudent(req: Request, res: Response, next: () => void) {
   if (req.session.userRole !== "student") {
     return res.status(403).json(ErrorResponseSchema.parse({ error: "Student access only" }));
   }
-  next();
+  return next();
 }
 
 router.get("/dashboard", requireStudent, async (req: Request, res: Response) => {
@@ -121,7 +121,7 @@ router.get("/dashboard", requireStudent, async (req: Request, res: Response) => 
 
 router.get("/modules/:moduleKey", requireStudent, async (req: Request, res: Response) => {
   const { moduleKey } = req.params;
-  if (!["M1", "M2", "M3"].includes(moduleKey)) {
+  if (!["M1", "M2", "M3"].includes(moduleKey as string)) {
     return res.status(400).json(ErrorResponseSchema.parse({ error: "Invalid module" }));
   }
 
@@ -267,7 +267,7 @@ router.get(
   requireStudent,
   async (req: Request, res: Response) => {
     const { moduleKey, runNumber } = req.params;
-    if (!["M1", "M2", "M3"].includes(moduleKey)) {
+    if (!["M1", "M2", "M3"].includes(moduleKey as string)) {
       return res.status(400).json({ error: "Invalid module" });
     }
 
@@ -281,7 +281,7 @@ router.get(
         and(
           eq(simulationRunsTable.userId, userId),
           eq(simulationRunsTable.moduleKey, key),
-          eq(simulationRunsTable.runNumber, parseInt(runNumber, 10)),
+          eq(simulationRunsTable.runNumber, parseInt(runNumber as string, 10)),
         ),
       )
       .limit(1);
@@ -360,7 +360,7 @@ function extractM1Decisions(body: any): M1Decisions {
 
 router.post("/modules/:moduleKey/practice", requireStudent, async (req: Request, res: Response) => {
   const { moduleKey } = req.params;
-  if (!["M1", "M2", "M3"].includes(moduleKey)) {
+  if (!["M1", "M2", "M3"].includes(moduleKey as string)) {
     return res.status(400).json(ErrorResponseSchema.parse({ error: "Invalid module" }));
   }
 
@@ -462,7 +462,7 @@ router.post("/modules/:moduleKey/practice", requireStudent, async (req: Request,
 
 router.post("/modules/:moduleKey/submit", requireStudent, async (req: Request, res: Response) => {
   const { moduleKey } = req.params;
-  if (!["M1", "M2", "M3"].includes(moduleKey)) {
+  if (!["M1", "M2", "M3"].includes(moduleKey as string)) {
     return res.status(400).json(ErrorResponseSchema.parse({ error: "Invalid module" }));
   }
 

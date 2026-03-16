@@ -1,3 +1,5 @@
+import path from "path";
+import { existsSync } from "fs";
 import express, { type Express } from "express";
 import cors from "cors";
 import session from "express-session";
@@ -39,6 +41,16 @@ app.use(
 );
 
 app.use("/api", router);
+
+if (process.env.NODE_ENV === "production") {
+  const frontendDist = path.resolve(process.cwd(), "artifacts/veloce-scm/dist/public");
+  if (existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(frontendDist, "index.html"));
+    });
+  }
+}
 
 seedData().catch((err) => {
   console.error("Seed error:", err);

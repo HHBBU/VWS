@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, PlayCircle, Upload, History, Trophy, AlertTriangle, Loader2 } from "lucide-react";
 import {
   Table,
-  Body,
+  TableBody,
   TableCell,
   TableHead,
   TableHeader,
@@ -36,7 +36,7 @@ export default function ModulePage() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useGetModuleData(moduleKey, {
-    query: { enabled: !!moduleKey }
+    query: { queryKey: getGetModuleDataQueryKey(moduleKey), enabled: !!moduleKey }
   });
 
   const practiceMutation = useRunPractice({
