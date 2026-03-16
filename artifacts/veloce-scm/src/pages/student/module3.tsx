@@ -63,7 +63,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { format } from "date-fns";
+import { format, differenceInDays, isPast, isFuture } from "date-fns";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -281,6 +281,36 @@ export default function Module3Page() {
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">Module 3: Distribution Network &amp; Inventory Policy</h1>
           <p className="text-sm text-gray-500">Veloce Wear Global Fulfillment Strategy — 90-Day Simulation</p>
+          {!isSubmitted && moduleData?.windowEnabled !== false && (() => {
+            const windowEnd = moduleData?.windowEnd ? new Date(moduleData.windowEnd) : null;
+            const windowStart = moduleData?.windowStart ? new Date(moduleData.windowStart) : null;
+            if (windowStart && isFuture(windowStart)) {
+              return (
+                <span className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
+                  Opens {format(windowStart, "MMM d, yyyy")}
+                </span>
+              );
+            }
+            if (windowEnd && isPast(windowEnd)) {
+              return (
+                <span className="text-sm text-red-600 font-medium flex items-center gap-1.5 mt-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Window Closed
+                </span>
+              );
+            }
+            if (windowEnd) {
+              const daysLeft = differenceInDays(windowEnd, new Date());
+              const isClosingSoon = daysLeft >= 0 && daysLeft <= 7;
+              return (
+                <span className={`text-sm flex items-center gap-1.5 mt-1 ${isClosingSoon ? "text-amber-600 font-medium" : "text-gray-500"}`}>
+                  Closes {format(windowEnd, "MMM d, yyyy")}
+                  {isClosingSoon && ` (${daysLeft === 0 ? "today" : `${daysLeft} day${daysLeft === 1 ? "" : "s"} left`})`}
+                </span>
+              );
+            }
+            return null;
+          })()}
         </div>
         <Button variant="outline" size="sm" onClick={() => setGuideOpen(true)}>
           <BookOpen className="w-4 h-4 mr-2" />

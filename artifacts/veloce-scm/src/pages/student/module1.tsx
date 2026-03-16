@@ -27,7 +27,7 @@ import {
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip as ReTooltip,
   Legend, CartesianGrid, ResponsiveContainer, Cell,
 } from "recharts";
-import { format } from "date-fns";
+import { format, differenceInDays, isPast, isFuture } from "date-fns";
 
 // ─── Supplier Data ───────────────────────────────────────────────────────────
 
@@ -460,6 +460,36 @@ export default function Module1Page() {
             )}
           </div>
           <p className="text-muted-foreground">Veloce Wear Manufacturing — Porto, Portugal • 55 points total</p>
+          {!isSubmitted && moduleData?.windowEnabled !== false && (() => {
+            const windowEnd = moduleData?.windowEnd ? new Date(moduleData.windowEnd) : null;
+            const windowStart = moduleData?.windowStart ? new Date(moduleData.windowStart) : null;
+            if (windowStart && isFuture(windowStart)) {
+              return (
+                <span className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+                  Opens {format(windowStart, "MMM d, yyyy")}
+                </span>
+              );
+            }
+            if (windowEnd && isPast(windowEnd)) {
+              return (
+                <span className="text-sm text-destructive font-medium flex items-center gap-1.5 mt-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Window Closed
+                </span>
+              );
+            }
+            if (windowEnd) {
+              const daysLeft = differenceInDays(windowEnd, new Date());
+              const isClosingSoon = daysLeft >= 0 && daysLeft <= 7;
+              return (
+                <span className={`text-sm flex items-center gap-1.5 mt-1 ${isClosingSoon ? "text-amber-600 dark:text-amber-400 font-medium" : "text-muted-foreground"}`}>
+                  Closes {format(windowEnd, "MMM d, yyyy")}
+                  {isClosingSoon && ` (${daysLeft === 0 ? "today" : `${daysLeft} day${daysLeft === 1 ? "" : "s"} left`})`}
+                </span>
+              );
+            }
+            return null;
+          })()}
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={() => setGuideOpen(true)}>

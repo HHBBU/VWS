@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Lock, PlayCircle, CheckCircle2, AlertCircle, Award, Star } from "lucide-react";
+import { Trophy, Lock, PlayCircle, CheckCircle2, AlertCircle, Award, Star, Clock, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format, differenceInDays, isPast, isFuture } from "date-fns";
 
 export default function StudentDashboard() {
   const { data, isLoading, error } = useGetStudentDashboard();
@@ -77,7 +78,41 @@ export default function StudentDashboard() {
             {data.modules.map((mod, i) => {
               const statusCfg = getStatusConfig(mod.status);
               const StatusIcon = statusCfg.icon;
-              
+
+              const windowEnd = mod.windowEnd ? new Date(mod.windowEnd) : null;
+              const windowStart = mod.windowStart ? new Date(mod.windowStart) : null;
+              const now = new Date();
+              const daysLeft = windowEnd ? differenceInDays(windowEnd, now) : null;
+              const isClosingSoon = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
+              const notYetOpen = windowStart ? isFuture(windowStart) : false;
+              const windowPastEnd = windowEnd ? isPast(windowEnd) : false;
+              const windowClosed = mod.window === "Closed" && mod.status !== "Submitted" && windowPastEnd && !notYetOpen;
+
+              const getDeadlineDisplay = () => {
+                if (mod.status === "Submitted") return null;
+                if (!mod.windowEnabled) return null;
+                if (notYetOpen && windowStart) {
+                  return (
+                    <span className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      Opens {format(windowStart, "MMM d, yyyy")}
+                    </span>
+                  );
+                }
+                if (windowPastEnd) {
+                  return null;
+                }
+                if (windowEnd) {
+                  return (
+                    <span className={`text-sm flex items-center gap-1.5 mt-1 ${isClosingSoon ? "text-amber-600 dark:text-amber-400 font-medium" : "text-muted-foreground"}`}>
+                      <Clock className="w-3.5 h-3.5" />
+                      Closes {format(windowEnd, "MMM d, yyyy")}
+                    </span>
+                  );
+                }
+                return null;
+              };
+
               return (
                 <motion.div
                   key={mod.key}
@@ -88,16 +123,25 @@ export default function StudentDashboard() {
                   <Card className={`overflow-hidden transition-all duration-300 ${mod.status === 'Locked' ? 'opacity-75 bg-muted/30' : 'hover:shadow-lg border-primary/10'}`}>
                     <div className="flex flex-col sm:flex-row">
                       <div className="p-6 flex-1">
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="flex flex-wrap justify-between items-start mb-4 gap-2">
                           <Badge variant={statusCfg.variant} className={`font-semibold ${statusCfg.variant === 'outline' || statusCfg.variant === 'secondary' ? statusCfg.color : ''}`}>
                             <StatusIcon className="w-3.5 h-3.5 mr-1.5" />
                             {mod.status}
                           </Badge>
-                          {mod.window === "Closed" && mod.status !== "Submitted" && (
-                            <Badge variant="destructive" className="ml-2">Window Closed</Badge>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {windowClosed && (
+                              <Badge variant="destructive">Window Closed</Badge>
+                            )}
+                            {isClosingSoon && !windowClosed && mod.status !== "Submitted" && daysLeft !== null && (
+                              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200">
+                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                {daysLeft === 0 ? "Closes today" : `${daysLeft} day${daysLeft === 1 ? "" : "s"} left`}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <h3 className="text-2xl font-bold mb-2">{mod.key}: {mod.title}</h3>
+                        <h3 className="text-2xl font-bold mb-1">{mod.key}: {mod.title}</h3>
+                        {getDeadlineDisplay()}
                         
                         <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 text-sm text-muted-foreground">
                           {mod.score !== null && mod.score !== undefined ? (
@@ -119,7 +163,7 @@ export default function StudentDashboard() {
                         <Link href={`/module/${mod.key}`}>
                           <Button 
                             className="w-full shadow-md" 
-                            disabled={!mod.isUnlocked && mod.status !== 'Submitted'}
+                            disabled={windowClosed || (!mod.isUnlocked && mod.status !== 'Submitted')}
                             variant={mod.status === 'Submitted' ? 'outline' : 'default'}
                           >
                             {mod.status === 'Submitted' ? 'View Results' : 'Enter Module'}

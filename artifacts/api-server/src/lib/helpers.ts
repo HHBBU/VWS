@@ -118,6 +118,42 @@ export async function getNextRunNumber(
   return (result?.maxRun ?? 0) + 1;
 }
 
+export async function getModuleWindowInfo(
+  userId: number,
+  moduleKey: ModuleKey,
+): Promise<{ windowStart: string | null; windowEnd: string | null; windowEnabled: boolean }> {
+  const [settings] = await db
+    .select()
+    .from(moduleSettingsTable)
+    .where(eq(moduleSettingsTable.moduleKey, moduleKey))
+    .limit(1);
+
+  if (!settings) {
+    return { windowStart: null, windowEnd: null, windowEnabled: false };
+  }
+
+  const [extension] = await db
+    .select()
+    .from(moduleExtensionsTable)
+    .where(
+      and(
+        eq(moduleExtensionsTable.userId, userId),
+        eq(moduleExtensionsTable.moduleKey, moduleKey),
+      ),
+    )
+    .limit(1);
+
+  const effectiveEnd = extension && extension.extendedEndAt > settings.endAt
+    ? extension.extendedEndAt
+    : settings.endAt;
+
+  return {
+    windowStart: settings.startAt.toISOString(),
+    windowEnd: effectiveEnd.toISOString(),
+    windowEnabled: settings.isEnabled,
+  };
+}
+
 export async function getFinalSubmission(userId: number, moduleKey: ModuleKey) {
   const [sub] = await db
     .select()

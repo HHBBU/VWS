@@ -80,6 +80,9 @@ export const GetStudentDashboardResponse = zod.object({
       score: zod.number().nullish(),
       submittedAt: zod.string().nullish(),
       practiceRunCount: zod.number(),
+      windowStart: zod.string().nullish(),
+      windowEnd: zod.string().nullish(),
+      windowEnabled: zod.boolean(),
     }),
   ),
   totalScore: zod.number(),
@@ -115,6 +118,9 @@ export const GetModuleDataResponse = zod.object({
     }),
   ),
   practiceCount: zod.number(),
+  windowStart: zod.string().nullish(),
+  windowEnd: zod.string().nullish(),
+  windowEnabled: zod.boolean(),
 });
 
 /**

@@ -8,6 +8,7 @@ import {
 import { and, eq, desc, count } from "drizzle-orm";
 import {
   getModuleWindowStatus,
+  getModuleWindowInfo,
   moduleIsUnlocked,
   getModuleStatus,
   hasFinalSubmission,
@@ -55,6 +56,7 @@ router.get("/dashboard", requireStudent, async (req: Request, res: Response) => 
       const status = await getModuleStatus(userId, key);
       const window = await getModuleWindowStatus(userId, key);
       const isUnlocked = await moduleIsUnlocked(userId, key);
+      const windowInfo = await getModuleWindowInfo(userId, key);
 
       const [practiceRunRow] = await db
         .select({ count: count() })
@@ -77,6 +79,9 @@ router.get("/dashboard", requireStudent, async (req: Request, res: Response) => 
         score: submission?.score ?? null,
         submittedAt: submission?.submittedAt?.toISOString() ?? null,
         practiceRunCount: practiceRunRow?.count ?? 0,
+        windowStart: windowInfo.windowStart,
+        windowEnd: windowInfo.windowEnd,
+        windowEnabled: windowInfo.windowEnabled,
       };
     }),
   );
@@ -121,6 +126,7 @@ router.get("/modules/:moduleKey", requireStudent, async (req: Request, res: Resp
 
   const finalSubmission = await getFinalSubmission(userId, key);
   const isSubmitted = !!finalSubmission?.submittedAt;
+  const windowInfo = await getModuleWindowInfo(userId, key);
 
   const runs = await db
     .select()
@@ -164,6 +170,9 @@ router.get("/modules/:moduleKey", requireStudent, async (req: Request, res: Resp
         createdAt: r.createdAt.toISOString(),
       })),
       practiceCount: practiceCountRow?.count ?? 0,
+      windowStart: windowInfo.windowStart,
+      windowEnd: windowInfo.windowEnd,
+      windowEnabled: windowInfo.windowEnabled,
     }),
   );
 });

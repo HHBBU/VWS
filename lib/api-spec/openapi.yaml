@@ -449,7 +449,15 @@ components:
           nullable: true
         practiceRunCount:
           type: integer
-      required: [key, title, maxScore, status, window, isUnlocked, practiceRunCount]
+        windowStart:
+          type: string
+          nullable: true
+        windowEnd:
+          type: string
+          nullable: true
+        windowEnabled:
+          type: boolean
+      required: [key, title, maxScore, status, window, isUnlocked, practiceRunCount, windowEnabled]
 
     DashboardData:
       type: object
@@ -506,7 +514,15 @@ components:
             $ref: "#/components/schemas/SimulationRun"
         practiceCount:
           type: integer
-      required: [moduleKey, isSubmitted, isUnlocked, recentRuns, practiceCount]
+        windowStart:
+          type: string
+          nullable: true
+        windowEnd:
+          type: string
+          nullable: true
+        windowEnabled:
+          type: boolean
+      required: [moduleKey, isSubmitted, isUnlocked, recentRuns, practiceCount, windowEnabled]
 
     RunResult:
       type: object
