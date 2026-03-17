@@ -543,19 +543,25 @@ export function runModule1Simulation(
   if (avgForecastError > 0.10) {
     const aIsAdvanced = advancedMethods.includes(forecastMethodA);
     const bIsAdvanced = advancedMethods.includes(forecastMethodB);
-    let suggestion: string;
-    if (!aIsAdvanced && !bIsAdvanced) {
-      suggestion = "linear regression or exponential smoothing";
-    } else if (!aIsAdvanced) {
-      const missing = forecastMethodB === "linear_regression" ? "exponential smoothing" : "linear regression";
-      suggestion = `${missing} for SKU A`;
+    if (!aIsAdvanced || !bIsAdvanced) {
+      let suggestion: string;
+      if (!aIsAdvanced && !bIsAdvanced) {
+        suggestion = "linear regression or exponential smoothing";
+      } else if (!aIsAdvanced) {
+        const missing = forecastMethodB === "linear_regression" ? "exponential smoothing" : "linear regression";
+        suggestion = `${missing} for SKU A`;
+      } else {
+        const missing = forecastMethodA === "linear_regression" ? "exponential smoothing" : "linear regression";
+        suggestion = `${missing} for SKU B`;
+      }
+      feedback.push(
+        `Forecasting error was ${(avgForecastError * 100).toFixed(1)}%. Consider using ${suggestion} for better accuracy.`,
+      );
     } else {
-      const missing = forecastMethodA === "linear_regression" ? "exponential smoothing" : "linear regression";
-      suggestion = `${missing} for SKU B`;
+      feedback.push(
+        `Forecasting error was ${(avgForecastError * 100).toFixed(1)}%. Review your forecast quantities to improve accuracy.`,
+      );
     }
-    feedback.push(
-      `Forecasting error was ${(avgForecastError * 100).toFixed(1)}%. Consider using ${suggestion} for better accuracy.`,
-    );
   }
   if (totalProcurementCost > 35000) {
     feedback.push(
