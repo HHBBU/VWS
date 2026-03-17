@@ -348,13 +348,15 @@ function extractM1Decisions(body: any): M1Decisions {
     numBatches: Math.max(1, parseInt(a.numBatches || a.num_batches || "1", 10)),
   }));
 
-  const legacyMethod = body.forecastMethod || body.forecast_method || "unknown";
+  const legacyMethod = body.forecastMethod || body.forecast_method || "";
+  const forecastMethodA = body.forecastMethodA || body.forecast_method_a || legacyMethod || "unknown";
+  const forecastMethodB = body.forecastMethodB || body.forecast_method_b || legacyMethod || "unknown";
   return {
     forecastA: parseFloat(body.forecastA || body.forecast_A || "0") || 0,
     forecastB: parseFloat(body.forecastB || body.forecast_B || "0") || 0,
-    forecastMethod: legacyMethod,
-    forecastMethodA: body.forecastMethodA || body.forecast_method_a || legacyMethod,
-    forecastMethodB: body.forecastMethodB || body.forecast_method_b || legacyMethod,
+    forecastMethod: legacyMethod || forecastMethodA,
+    forecastMethodA,
+    forecastMethodB,
     purchaseReport: body.purchaseReport === true || body.purchase_report === true,
     allocations,
     justification: (body.justification || "").trim(),
