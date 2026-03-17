@@ -541,13 +541,18 @@ export function runModule1Simulation(
   const feedback: string[] = [];
 
   if (avgForecastError > 0.10) {
-    const neitherIsAdvanced =
-      !advancedMethods.includes(forecastMethodA) && !advancedMethods.includes(forecastMethodB);
-    const suggestion = neitherIsAdvanced
-      ? "linear regression or exponential smoothing"
-      : advancedMethods.includes(forecastMethodA)
-        ? "exponential smoothing for SKU B"
-        : "linear regression for SKU A";
+    const aIsAdvanced = advancedMethods.includes(forecastMethodA);
+    const bIsAdvanced = advancedMethods.includes(forecastMethodB);
+    let suggestion: string;
+    if (!aIsAdvanced && !bIsAdvanced) {
+      suggestion = "linear regression or exponential smoothing";
+    } else if (!aIsAdvanced) {
+      const missing = forecastMethodB === "linear_regression" ? "exponential smoothing" : "linear regression";
+      suggestion = `${missing} for SKU A`;
+    } else {
+      const missing = forecastMethodA === "linear_regression" ? "exponential smoothing" : "linear regression";
+      suggestion = `${missing} for SKU B`;
+    }
     feedback.push(
       `Forecasting error was ${(avgForecastError * 100).toFixed(1)}%. Consider using ${suggestion} for better accuracy.`,
     );
