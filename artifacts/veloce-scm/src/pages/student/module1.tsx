@@ -318,7 +318,8 @@ export default function Module1Page() {
   // ── Form State ──
   const [forecastA, setForecastA] = useState("");
   const [forecastB, setForecastB] = useState("");
-  const [forecastMethod, setForecastMethod] = useState("");
+  const [forecastMethodA, setForecastMethodA] = useState("");
+  const [forecastMethodB, setForecastMethodB] = useState("");
   const [purchaseReport, setPurchaseReport] = useState(false);
   const [justification, setJustification] = useState("");
   const [allocations, setAllocations] = useState<Allocation[]>([
@@ -340,7 +341,8 @@ export default function Module1Page() {
     return {
       forecastA: parseFloat(forecastA) || 0,
       forecastB: parseFloat(forecastB) || 0,
-      forecastMethod,
+      forecastMethodA,
+      forecastMethodB,
       purchaseReport,
       justification,
       allocations: allocations
@@ -354,7 +356,7 @@ export default function Module1Page() {
           numBatches: parseInt(a.numBatches) || 1,
         })),
     };
-  }, [forecastA, forecastB, forecastMethod, purchaseReport, justification, allocations]);
+  }, [forecastA, forecastB, forecastMethodA, forecastMethodB, purchaseReport, justification, allocations]);
 
   const runPractice = async () => {
     setIsPracticing(true);
@@ -630,7 +632,7 @@ export default function Module1Page() {
                   <CardDescription>Enter your forecast for each SKU and select your method</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <div className="grid md:grid-cols-3 gap-5">
+                  <div className="grid md:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <Label htmlFor="forecastA">SKU A Forecast (units)</Label>
                       <Input
@@ -653,10 +655,13 @@ export default function Module1Page() {
                       />
                       <p className="text-xs text-muted-foreground">BOM: 0.42 kg nylon × 1.08 scrap/unit</p>
                     </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <Label>Forecasting Method</Label>
-                      <Select value={forecastMethod} onValueChange={setForecastMethod} disabled={isSubmitted}>
-                        <SelectTrigger><SelectValue placeholder="Select method…" /></SelectTrigger>
+                      <Label>SKU A Forecasting Method</Label>
+                      <Select value={forecastMethodA} onValueChange={setForecastMethodA} disabled={isSubmitted}>
+                        <SelectTrigger><SelectValue placeholder="Select method for SKU A…" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="linear_regression">Linear Regression</SelectItem>
                           <SelectItem value="moving_average">Moving Average (3-year)</SelectItem>
@@ -664,6 +669,20 @@ export default function Module1Page() {
                           <SelectItem value="seasonal_decomposition">Seasonal Decomposition</SelectItem>
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">Choose based on the demand pattern you observe for SKU A</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>SKU B Forecasting Method</Label>
+                      <Select value={forecastMethodB} onValueChange={setForecastMethodB} disabled={isSubmitted}>
+                        <SelectTrigger><SelectValue placeholder="Select method for SKU B…" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="linear_regression">Linear Regression</SelectItem>
+                          <SelectItem value="moving_average">Moving Average (3-year)</SelectItem>
+                          <SelectItem value="exponential_smoothing">Exponential Smoothing</SelectItem>
+                          <SelectItem value="seasonal_decomposition">Seasonal Decomposition</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">Choose based on the demand pattern you observe for SKU B</p>
                     </div>
                   </div>
 

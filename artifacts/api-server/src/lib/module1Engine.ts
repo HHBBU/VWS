@@ -225,6 +225,8 @@ export interface M1Decisions {
   forecastA: number;
   forecastB: number;
   forecastMethod: string;
+  forecastMethodA?: string;
+  forecastMethodB?: string;
   purchaseReport: boolean;
   allocations: SupplierAllocation[];
   justification: string;
@@ -272,6 +274,8 @@ export interface M1SimulationResult {
   feedback: string[];
   hasReport: boolean;
   forecastMethod: string;
+  forecastMethodA: string;
+  forecastMethodB: string;
 }
 
 // ============================================================
@@ -292,7 +296,10 @@ export function runModule1Simulation(
   // 2. EXTRACT & VALIDATE DECISIONS
   let forecastA = Math.max(1, decisions.forecastA || 1);
   let forecastB = Math.max(1, decisions.forecastB || 1);
-  const forecastMethod = decisions.forecastMethod || "unknown";
+  const legacyMethod = decisions.forecastMethod || "unknown";
+  const forecastMethodA = decisions.forecastMethodA ?? legacyMethod;
+  const forecastMethodB = decisions.forecastMethodB ?? legacyMethod;
+  const forecastMethod = forecastMethodA;
   const hasReport = decisions.purchaseReport || false;
   const allocations = decisions.allocations || [];
   const justification = decisions.justification || "";
@@ -449,7 +456,11 @@ export function runModule1Simulation(
   else if (avgForecastError <= 0.15) forecastingScore = 9;
   else forecastingScore = 6;
 
-  if (["linear_regression", "exponential_smoothing"].includes(forecastMethod) && forecastingScore > 0) {
+  const advancedMethods = ["linear_regression", "exponential_smoothing"];
+  if (
+    (advancedMethods.includes(forecastMethodA) || advancedMethods.includes(forecastMethodB)) &&
+    forecastingScore > 0
+  ) {
     forecastingScore = Math.min(15, forecastingScore + 1);
   }
 
@@ -530,8 +541,13 @@ export function runModule1Simulation(
   const feedback: string[] = [];
 
   if (avgForecastError > 0.10) {
-    const suggestion =
-      forecastMethod !== "linear_regression" ? "linear regression" : "exponential smoothing";
+    const neitherIsAdvanced =
+      !advancedMethods.includes(forecastMethodA) && !advancedMethods.includes(forecastMethodB);
+    const suggestion = neitherIsAdvanced
+      ? "linear regression or exponential smoothing"
+      : advancedMethods.includes(forecastMethodA)
+        ? "exponential smoothing for SKU B"
+        : "linear regression for SKU A";
     feedback.push(
       `Forecasting error was ${(avgForecastError * 100).toFixed(1)}%. Consider using ${suggestion} for better accuracy.`,
     );
@@ -589,5 +605,7 @@ export function runModule1Simulation(
     feedback,
     hasReport,
     forecastMethod,
+    forecastMethodA,
+    forecastMethodB,
   };
 }
