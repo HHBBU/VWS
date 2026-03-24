@@ -43,7 +43,7 @@ const SUPPLIERS = [
   { id: "MX2", name: "Yucatan SustainTex", country: "Mexico", cottonPrice: 3.25, nylonPrice: 4.75, leadTime: 26, reliability: 92, sustainability: 4.2, quality: 3.9, region: "offshore", certs: "ISO9001, ISO14001" },
 ];
 
-const NEARSHORE_TRANSPORTS = ["truck", "rail", "air"];
+const NEARSHORE_TRANSPORTS = ["truck", "rail"];
 const OFFSHORE_TRANSPORTS = ["ocean", "air"];
 
 const TRANSPORT_LABELS: Record<string, string> = {
@@ -194,7 +194,7 @@ function ResultsPanel({ result, onClose }: { result: SimResult; onClose: () => v
         <CardContent className="space-y-4">
           {[
             { label: "Forecasting & Planning", score: result.scoreBreakdown.forecasting, max: 15 },
-            { label: "Supplier Selection Method", score: result.scoreBreakdown.supplierMethod, max: 12 },
+            { label: "Supplier Selection — MCDA", score: result.scoreBreakdown.supplierMethod, max: 12 },
             { label: "Cost / Service / Risk Trade-offs", score: result.scoreBreakdown.tradeoffs, max: 12 },
             { label: "Quality + Sustainability", score: result.scoreBreakdown.qualitySustainability, max: 8 },
             { label: "Validity + Justification", score: result.scoreBreakdown.validityJustification, max: 8 },
@@ -664,9 +664,8 @@ export default function Module1Page() {
                         <SelectTrigger><SelectValue placeholder="Select method for SKU A…" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="linear_regression">Linear Regression</SelectItem>
-                          <SelectItem value="moving_average">Moving Average (3-year)</SelectItem>
+                          <SelectItem value="moving_average">Moving Average (4-Year)</SelectItem>
                           <SelectItem value="exponential_smoothing">Exponential Smoothing</SelectItem>
-                          <SelectItem value="seasonal_decomposition">Seasonal Decomposition</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">Choose based on the demand pattern you observe for SKU A</p>
@@ -677,9 +676,8 @@ export default function Module1Page() {
                         <SelectTrigger><SelectValue placeholder="Select method for SKU B…" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="linear_regression">Linear Regression</SelectItem>
-                          <SelectItem value="moving_average">Moving Average (3-year)</SelectItem>
+                          <SelectItem value="moving_average">Moving Average (4-Year)</SelectItem>
                           <SelectItem value="exponential_smoothing">Exponential Smoothing</SelectItem>
-                          <SelectItem value="seasonal_decomposition">Seasonal Decomposition</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">Choose based on the demand pattern you observe for SKU B</p>
@@ -824,13 +822,18 @@ export default function Module1Page() {
                                 </Select>
                               </td>
                               <td className="p-1.5 w-20">
-                                <Input
-                                  type="number" min="1" max="4"
-                                  className="h-9 text-center"
-                                  value={alloc.numBatches}
-                                  onChange={(e) => updateAllocation(alloc.id, "numBatches", e.target.value)}
+                                <Select
+                                  value={String(alloc.numBatches)}
+                                  onValueChange={(v) => updateAllocation(alloc.id, "numBatches", v)}
                                   disabled={isSubmitted}
-                                />
+                                >
+                                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="1">1</SelectItem>
+                                    <SelectItem value="2">2</SelectItem>
+                                    <SelectItem value="4">4</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </td>
                               <td className="p-1.5">
                                 <Button

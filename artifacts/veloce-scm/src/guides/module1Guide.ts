@@ -1,138 +1,80 @@
-export const module1Guide = `# Global Sourcing Under Pressure — "Veloce Wear" Micro-Collection Cycle
-
-## Your Briefing
-
-Welcome to **Veloce Wear**, a premium fast-fashion apparel company inspired by Zara's ability to launch **new designs quickly** while protecting **quality**, **brand reputation**, and **sustainability commitments**.
-
-You have been appointed as the **Global Sourcing Analyst** for the next micro-collection cycle. Your mission is to build a sourcing plan that ensures our Porto, Portugal manufacturing campus receives the right materials **on time**, **at the right quality**, and **at a total landed cost that protects profit**.
-
-This is not a "buy the cheapest" exercise. In fast fashion, procurement decisions shape the entire supply chain. A sourcing plan that looks good on paper can still fail if it creates:
-
-- late material arrivals,
-- inconsistent quality (rework and delays),
-- sustainability compliance risks,
-- or cost spikes from expediting and penalties.
+export const module1Guide = `# VELOCE WEAR — Supply Chain Management Simulation
+## MODULE 1: GLOBAL SOURCING & PROCUREMENT
+### Student Guidebook · 55 Points · Year 31 Forecast Cycle
+*SCM 4330: SCM Applications · Georgia Gwinnett College*
 
 ---
 
-## Global Sourcing Sprint — CSCO Briefing
+## 📧 Briefing from the CSCO — Porto Headquarters
 
-You are the Global Sourcing Manager for Veloce Wear's next micro-collection. Your job is to forecast demand, translate it into **material requirements**, and award supplier volumes across global suppliers while protecting Veloce Wear's mission (fast fashion speed + high perceived quality + responsible sourcing). You must balance cost vs lead time vs reliability vs sustainability, then lock one final sourcing strategy.
+**From:** Sofia Costa, Chief Supply Chain Officer, Veloce Wear Porto HQ
+**To:** Global Sourcing Analyst Team | **Subject:** Year 31 Micro-Collection — Sourcing Sprint
 
-### Your Role
+Team —
 
-You are part of the **Global Procurement & Supplier Management Team**. Your responsibilities include:
+The Year 31 micro-collection window opens in eight weeks. I need a complete sourcing plan on my desk before Porto manufacturing commits to a production schedule. This is not optional — without confirmed material supply, we cannot cut a single unit.
 
-1. **Forecast demand** for two SKUs using historical sales data provided in the simulation
-2. Convert your forecast into **material requirements (kg)** using the BOM and scrap rates
-3. Select and allocate suppliers for:
-   - **Cotton** (SKU A: Trend Tee)
-   - **Nylon-spandex** (SKU B: Core Jogger)
-4. Choose logistics decisions that matter in real life:
-   - **Transport mode** (cost vs speed vs carbon)
-   - **Assurance package** (risk reduction vs premium cost)
-   - **Batching strategy** (flexibility vs admin cost and delay risk)
-5. Decide whether to purchase a **€10,000 Market Intelligence Report** that reduces forecast uncertainty
+Your task is clear: forecast what we need, translate it into raw-material kilograms, identify and qualify the right global suppliers, lock transport lanes, and present a total landed cost we can defend to the board. Veloce Wear does not win on cheap — we win on speed, quality, and responsibility. Your sourcing plan must reflect that.
 
-### The Business Reality (Why This Is Hard)
+One more thing: every decision you make here flows directly into production scheduling (Module 2) and distribution (Module 3). A poor sourcing call today becomes a supply crisis next quarter.
 
-Veloce Wear competes in three major markets:
-
-- **Western Europe (largest store footprint)** — expects fast replenishment and consistent quality
-- **USA & Canada (high margin + very high service expectations)** — stockouts mean lost sales
-- **APAC (trend-sensitive, volatile)** — the wrong inventory arrives too late and gets discounted
-
-**Mission Statement:**
-
-> "Deliver new designs fast while meeting strict quality and sustainability standards."
-
-So your sourcing plan must balance five real-world criteria:
-
-- **Cost** (total landed cost matters)
-- **Lead time** (Porto must receive materials in time to produce)
-- **Reliability** (on-time delivery is not guaranteed)
-- **Quality** (supports premium positioning and reduces rework)
-- **Sustainability & compliance** (certifications, ethical sourcing, ESG expectations)
-
-### What You Will See in the Simulation
-
-The app provides interactive tools, including:
-
-**Interactive 3D Bubble Chart** — visualizes suppliers by Cost vs Quality vs Sustainability. Helps you identify "best value" suppliers and premium sustainable options.
-
-**KPI Dashboard** after each run — landed cost, lead time and reliability, sustainability/quality scores, carbon index, late delivery outcomes (penalties).
-
-**A structured grading rubric** — you are graded on forecasting, supplier decision quality, logistics tradeoffs, mission alignment, and data validity.
-
-### Your Deliverable (What You Submit)
-
-You will submit one final sourcing plan that includes:
-
-- your **demand forecast** for both SKUs
-- your **material requirements** (cotton and nylon in kg)
-- your **supplier selection and allocations**
-- your **logistics and risk management choices**
-- a professional **justification** explaining your tradeoffs
-
-You may run multiple practice simulations. Only your **Final Submission** counts.
-
-### How This Connects to the Next Modules
-
-Your Module 1 decisions become real constraints in the later modules:
-
-- If you choose long lead times or low reliability, **production may be delayed** (Module 2).
-- If you choose low-quality materials, **rework and cost increase** (Module 2).
-- If you choose high-cost expediting or carbon-heavy modes, it impacts **profit and sustainability targets** (Module 3).
-
-In other words: **your sourcing plan becomes the foundation of the entire supply chain strategy.**
+Good luck. I am counting on you. — **Sofia**
 
 ---
 
-# Ultimate Student Guide — Module 1: Global Sourcing & Procurement (55 points)
+## 🏭 Company Overview & Your Role
 
-**Module Goal:** You are the Global Sourcing Analyst for Veloce Wear. Your job is to forecast demand, convert it into raw-material requirements (kg), select suppliers using a formal method, choose transport/assurance/batching, and submit a defensible plan.
+Veloce Wear is a premium fast-fashion apparel company inspired by Zara's ability to launch new designs quickly while protecting quality, brand reputation, and sustainability commitments. All production runs through the Porto Manufacturing Campus in Portugal.
 
----
+| Store Network | HQ / Production | Your SKUs | Your Role |
+|---|---|---|---|
+| 420 stores globally (EU · USA/Canada · APAC) | Porto, Portugal (cut · sew · finish · pack) | SKU A: Trend Tee · SKU B: Core Jogger | Global Sourcing Analyst — Procurement & Supplier Mgmt Team |
 
-## 1) Business Context (What You're Optimizing For)
+**Veloce Wear Mission:** *"Deliver new designs fast while meeting strict quality and sustainability standards."*
 
-**Company mission (important — this affects your grade):**
+Your sourcing plan will be evaluated against five real-world criteria:
 
-> "Deliver 'newness' fast while meeting strict quality and sustainability standards."
-
-**Manufacturing:** Porto Manufacturing Campus (Portugal) — cut/sew/finish/package.
-
-**Store network:** 420 stores globally (Western Europe, USA/Canada, APAC).
-
----
-
-## 2) Products, BOM, Scrap (Raw Materials, Not Finished Goods)
-
-You are **buying raw materials** to feed Porto manufacturing.
-
-**SKU A — Trend Tee (cotton knit):**
-- BOM: **0.23 kg cotton per unit**
-- Scrap/Waste: **6%** (multiply by **1.06**)
-
-**SKU B — Core Jogger (nylon-spandex fabric):**
-- BOM: **0.42 kg nylon per unit**
-- Scrap/Waste: **8%** (multiply by **1.08**)
-
-**Material requirement formulas (what you must compute):**
-- **Cotton kg required = Your_Forecast_A × 0.23 × 1.06**
-- **Nylon kg required = Your_Forecast_B × 0.42 × 1.08**
+| Criterion | Why It Matters at Veloce Wear |
+|---|---|
+| Cost | Total landed cost shapes profitability and board reporting |
+| Lead Time | Porto must receive materials before production windows close |
+| Reliability | Late material = delayed launch = missed market window |
+| Quality | Premium positioning + rework cost avoidance |
+| Sustainability | ESG commitments, brand trust, certifications required by retail partners |
 
 ---
 
-## 3) Forecasting — Your First Major Decision
+## 📋 How to Use This Guidebook
 
-### Where to Get Your Data
+Each step follows the same three-part pattern:
 
-⚠️ **IMPORTANT:** The simulation platform displays historical demand data on-screen when you open Module 1. **Use the data shown in the simulation** as the basis for your forecasting. The reference dataset below is provided so you can practice forecasting methods in Excel before you open the simulation.
+| Icon | What It Means | Your Action |
+|---|---|---|
+| 🔍 INVESTIGATE | Where to look — in the simulation or in the data tables | Examine the information; do not skip this |
+| 💡 THINK ABOUT THIS | Questions to guide your analysis | Answer these mentally or in notes before deciding |
+| ✍️ YOUR DECISION | What you must enter or submit in the simulation | Make your choice; it will be graded |
 
-### Reference Dataset (30-Year Annual Sales History)
+⚠️ **Important: Practice Runs vs. Final Submission**
+You may run the simulation as many times as you like for practice — only your Final Submission is graded. Use practice runs to test your decisions and observe how KPIs change before you commit. Read every KPI carefully after each practice run.
 
-Use this dataset to **practice your forecasting skills** in Excel. When you open the simulation, you will see platform-generated historical data — apply the same analytical approach to that data.
+---
+
+---
+
+## STEP 1 — Demand Forecasting: What Will We Need in Year 31?
+
+You have 30 years of annual sales history for both SKUs. Your job is to forecast Year 31 demand for each product. The method you choose matters — not every product behaves the same way.
+
+### 🔍 Open Module 1 in the Simulation — Examine the 30-Year History
+
+- Look at the historical demand chart for **SKU A (Trend Tee)**. Does demand go up, go down, stay flat, or fluctuate randomly?
+- Look at the chart for **SKU B (Core Jogger)**. How does its pattern differ from SKU A?
+- Use the data table below to examine the numbers in detail — look at early years vs. recent years.
+- Calculate the difference between consecutive years for each SKU. What do you notice?
+
+### Historical Demand Data — 30 Years
+
+Study this table carefully. Your forecast must be based on what the data actually shows.
 
 | Year | SKU A (Trend Tee) | SKU B (Core Jogger) |
 |------|-------------------|---------------------|
@@ -166,326 +108,361 @@ Use this dataset to **practice your forecasting skills** in Excel. When you open
 | 28 | 16,050 | 9,000 |
 | 29 | 16,350 | 9,200 |
 | 30 | 16,700 | 9,000 |
-| **Next** | **(YOU forecast)** | **(YOU forecast)** |
+| **31** | **(your forecast)** | **(your forecast)** |
 
-### How to Choose a Forecasting Method
+### Forecasting Methods Available
 
-The right forecasting method depends on the **pattern you observe in the data**. Before choosing a method, do this analysis:
+The simulation offers three methods. Choose the one that best fits each SKU's pattern.
 
-**Step 1 — Plot the data.** Create a chart in Excel with the historical values. What do you see?
+| Method | Best For | How It Works |
+|---|---|---|
+| Linear Regression | Demand with a consistent upward or downward trend over time | Fits a straight line through all data points; extrapolates to Year 31 |
+| Moving Average (4-Year) | Stable demand that fluctuates around a relatively constant mean | Averages the most recent 4 years to smooth out noise |
+| Exponential Smoothing | Trend-following with more weight on recent observations | Exponentially decays older data; responsive to recent shifts |
 
-**Step 2 — Ask these diagnostic questions for EACH SKU:**
+### 💡 Think About This
 
-- Does the data show a **consistent upward or downward slope** over time? If yes, you need a method that captures **trend**.
-- Does the data **fluctuate around a relatively flat line** without a clear direction? If yes, a **smoothing or averaging** method may be sufficient.
-- Are there **repeating peaks and valleys** at regular intervals? If yes, consider a method that handles **seasonality**.
-- Is the most recent data **more representative** of the future than older data? If yes, consider methods that weight recent observations more heavily.
+- For SKU A: Does demand increase by roughly the same amount each year, or does it accelerate/decelerate? Which method captures this pattern?
+- For SKU B: Is demand growing, shrinking, or hovering in a band? Which method is appropriate when there is no clear trend?
+- If you were a production planner, would you rather over-forecast or under-forecast? What are the risks of each error direction?
+- The simulation offers an optional Market Intelligence Report (€10,000). When might that investment be worth it — and when would it not be?
 
-**Step 3 — Match the pattern to a method:**
+### ✍️ Enter Your Forecast in the Simulation
 
-| Data Pattern You Observe | Methods That Work Well | Methods That Work Poorly |
-|--------------------------|----------------------|-------------------------|
-| Clear upward/downward slope | Linear Regression, Exponential Smoothing with trend | Simple Moving Average (lags behind the trend) |
-| Stable, fluctuating around a mean | Moving Average, Simple Exponential Smoothing | Regression may overfit noise |
-| Repeating seasonal cycles | Seasonal Decomposition, Holt-Winters | Simple averages ignore cycles |
-| Recent shift in behavior | Weighted/Exponential Smoothing (high α) | Long-window Moving Average (slow to react) |
+- **Forecast_A** — Your Year 31 unit demand forecast for SKU A (Trend Tee)
+- **Forecast_B** — Your Year 31 unit demand forecast for SKU B (Core Jogger)
+- **Forecast Method** — Select the method you used (Linear Regression, Moving Average 4-Year, or Exponential Smoothing)
+- **Market Report** — Decide whether to purchase the €10,000 report (check the box if yes)
 
-**Step 4 — Calculate your forecast.** Use Excel (LINEST, TREND, AVERAGE, or manual formulas) and **document your method and rationale**.
-
-### 📝 Your Forecasting Worksheet
-
-\`\`\`
-FOR EACH SKU, complete this analysis:
-
-1. What pattern do I see in the data?
-   SKU A pattern: _________________________________
-   SKU B pattern: _________________________________
-
-2. Which method matches each pattern? (refer to the table above)
-   SKU A method: _________________ Why? _________________
-   SKU B method: _________________ Why? _________________
-
-3. My calculations (attach Excel output or show formula):
-   _________________________________________________
-
-4. My forecasts:
-   SKU A: _______ units
-   SKU B: _______ units
-
-5. Material requirements:
-   Cotton kg = _______ × 0.23 × 1.06 = _______ kg
-   Nylon kg  = _______ × 0.42 × 1.08 = _______ kg
-\`\`\`
-
-### Demand Uncertainty & the Market Intelligence Report
-
-The simulation uses **stochastic demand** around *your forecast* using a Normal distribution:
-- Actual_A ~ Normal(mean = Forecast_A, σ = 10% of Forecast_A)
-- Actual_B ~ Normal(mean = Forecast_B, σ = 6% of Forecast_B)
-
-**Optional: Market Intelligence Report (€10,000)**
-- Cost: **€10,000**
-- Effect: reduces uncertainty to **σ_A = 7%** and **σ_B = 4%**
-- Buy if: you want to reduce the risk of stockout or overstock
-- Skip if: your forecasting method is highly accurate and you're budget-constrained
+After a practice run, examine the Forecast Error % in the KPI dashboard — how accurate was your method?
 
 ---
 
-## 4) Supplier Database (8 Suppliers)
+## STEP 2 — Raw-Material Requirements: Translating Units to Kilograms
 
-Two suppliers per country with different quality/sustainability/certification profiles.
+Porto manufacturing does not buy finished garments — it buys raw materials. Your forecast (units) must be converted to kilograms using the Bill of Materials (BOM) and factory scrap rates. You must order enough material to cover both production requirements and waste.
 
-| ID | Company | Country | Cotton €/kg | Nylon €/kg | Lead (days) | On-Time % | Sustainability (1–5) | Quality (1–5) | Certifications |
-|----|---------|---------|-------------|------------|-------------|-----------|---------------------|---------------|----------------|
-| PT1 | Lusitex Premium | Portugal | 3.55 | 5.10 | 5 | 97% | 4.4 | 4.6 | ISO9001, ISO14001, OEKO-TEX |
-| PT2 | PortoWeave Organic | Portugal | 3.85 | 5.25 | 6 | 96% | 4.8 | 4.7 | ISO9001, ISO14001, **GOTS**, OEKO-TEX |
-| TR1 | Anatolia Mills | Turkey | 3.20 | 4.95 | 8 | 94% | 3.8 | 4.0 | ISO9001, ISO14001 |
-| TR2 | Bosporus Textiles | Turkey | 3.35 | 5.05 | 9 | 95% | 4.1 | 4.2 | ISO9001, ISO14001, OEKO-TEX |
-| VN1 | Saigon Spinners | Vietnam | 2.85 | 4.70 | 28 | 88% | 3.2 | 3.6 | ISO9001 |
-| VN2 | Hanoi EcoWeave | Vietnam | 3.05 | 4.85 | 30 | 90% | 4.0 | 3.8 | ISO9001, ISO14001, OEKO-TEX |
-| MX1 | Monterrey KnitWorks | Mexico | 3.10 | 4.60 | 24 | 91% | 3.5 | 3.7 | ISO9001 |
-| MX2 | Yucatan SustainTex | Mexico | 3.25 | 4.75 | 26 | 92% | 4.2 | 3.9 | ISO9001, ISO14001 |
+### 🔍 Examine the BOM & Scrap Data
 
-**Certifications you should understand (use in your justification):**
-- **ISO 9001** — quality management system
-- **ISO 14001** — environmental management system
-- **OEKO-TEX** — chemical safety for textiles
-- **GOTS** — Global Organic Textile Standard (only PT2 has this — required if you claim "organic" in your strategy)
+- Each SKU requires a specific weight of fabric per unit — this is the **BOM factor**.
+- The Porto factory loses a percentage of raw material during cutting and sewing — this is **scrap**.
+- If you order exactly the production requirement without accounting for scrap, the factory will run short before the last units are produced.
 
-**You must select suppliers using a formal MCDA method** (Weighted Scoring, AHP, or TOPSIS). Define your criteria weights, score each supplier, rank them, and select 2–4 for your portfolio.
+| SKU | Product Name | Material | BOM (kg/unit) | Scrap Rate | Multiplier |
+|---|---|---|---|---|---|
+| SKU A | Trend Tee | Premium Cotton | 0.23 kg | 6% | × 1.06 |
+| SKU B | Core Jogger | Nylon-Spandex | 0.42 kg | 8% | × 1.08 |
 
----
+### 📐 Material Requirement Formula
 
-## 5) Transportation Constraints, Costs, and Lead Times
+- **Cotton kg required = Forecast_A × 0.23 × 1.06**
+- **Nylon kg required = Forecast_B × 0.42 × 1.08**
 
-**Mode feasibility rules (hard constraint — invalid choices lose points):**
-- **Nearshore** (Portugal, Turkey): Truck / Rail / Air
-- **Offshore** (Vietnam, Mexico): Ocean / Air only
+Apply your Year 31 forecast values to these formulas. The result is the minimum you must procure from suppliers.
 
-| Mode | Cost €/kg | Transit Time | CO₂ Index | Reliability Bonus |
-|------|-----------|-------------|-----------|-------------------|
-| Truck | 0.18 | 2–5 days | 2 | +0% |
-| Rail | 0.12 | 4–8 days | 1 (lowest) | +1% |
-| Ocean | 0.08 | 18–35 days | 3 | +0% |
-| Air | 0.95 | 4–9 days | 9 (highest) | +2% |
+### 💡 Think About This
 
-**Admin/ordering cost:** **€200 per batch** (per supplier allocation).
+- Calculate both kg requirements using your forecasts from Step 1. Write them down before proceeding.
+- What happens if your total supplier allocations fall below the calculated kg requirement? (Check: what does the simulation flag?)
+- The system requires ≥ 95% coverage. Is ordering exactly 100% of your requirement safe given that late deliveries may occur?
 
 ---
 
-## 6) Assurance Packages (Risk vs Cost)
+## STEP 3 — Supplier Selection: Building Your MCDA Portfolio
 
-Assurance increases reliability but also increases **material price** (premium). Reliability is capped at **99%**.
+You have eight global suppliers to choose from. You are not required to use all of them — but you must build a portfolio that performs well across four weighted criteria, not just cost. This is Multi-Criteria Decision Analysis (MCDA) in action.
 
-| Package | Price Premium | Reliability Boost | When to Consider |
-|---------|-------------|-------------------|------------------|
-| Standard | +0% | +0% | Suppliers already at high reliability |
-| Priority | +3% price | +4% reliability | Suppliers with moderate reliability |
-| Premium | +6% price | +8% reliability | Suppliers with low base reliability |
+### 🔍 Open the 3D Bubble Chart in the Simulation
 
----
+- The **X-axis** shows cost per kg — lower is cheaper.
+- The **Y-axis** shows quality score — higher means fewer defects and better consistency.
+- The **bubble SIZE** represents sustainability — larger = more sustainable.
+- The **bubble COLOR** shows region: green = nearshore (Portugal/Turkey), purple = offshore (Vietnam/Mexico).
+- **Hover** over each supplier to see their certifications, lead time, and reliability %.
+- Look for the 'sweet spot' — suppliers in the upper portion of the chart (high quality) with large bubbles (high sustainability) at an acceptable cost.
 
-## 7) Quantity Discounts (Per Supplier, Per Material)
+### Supplier Reference Table
 
-These apply to **kg ordered per supplier**, not total kg across all suppliers.
+Use this data along with the simulation's bubble chart to evaluate your options.
 
-**Cotton discount tiers:**
-- ≥ 20,000 kg → **2% discount**
-- ≥ 50,000 kg → **4% discount**
+| ID | Supplier | Country | Cotton €/kg | Nylon €/kg | Lead Time | On-Time Delivery | Quality (1–5) | Sust. (1–5) | Certifications |
+|---|---|---|---|---|---|---|---|---|---|
+| PT1 | Lusitex Premium | Portugal | — | 3.55 | 5 days | 97% | 4.4 | 4.6 | ISO9001, ISO14001, OEKO-TEX |
+| PT2 | PortoWeave Organic | Portugal | 3.85 | — | 6 days | 96% | 4.8 | 4.7 | ISO9001, ISO14001, GOTS, OEKO-TEX |
+| TR1 | Anatolia Mills | Turkey | 3.20 | — | 8 days | 94% | 3.8 | 4.0 | ISO9001, ISO14001 |
+| TR2 | Bosporus Textiles | Turkey | — | 3.35 | 9 days | 95% | 4.1 | 4.2 | ISO9001, ISO14001, OEKO-TEX |
+| VN1 | Saigon Spinners | Vietnam | 2.85 | — | 28 days | 88% | 3.2 | 3.6 | ISO9001 |
+| VN2 | Hanoi EcoWeave | Vietnam | — | 3.05 | 30 days | 90% | 4.0 | 3.8 | ISO9001, ISO14001, OEKO-TEX |
+| MX1 | Monterrey KnitWorks | Mexico | 3.10 | — | 24 days | 91% | 3.5 | 3.7 | ISO9001 |
+| MX2 | Yucatan SustainTex | Mexico | — | 3.25 | 26 days | 92% | 4.2 | 3.9 | ISO9001, ISO14001 |
 
-**Nylon discount tiers:**
-- ≥ 10,000 kg → **2% discount**
-- ≥ 25,000 kg → **4% discount**
+**Certification Guide:**
+- **ISO 9001** — Quality management system standard
+- **ISO 14001** — Environmental management system standard
+- **OEKO-TEX** — Tests for harmful substances in textiles
+- **GOTS** — Global Organic Textile Standard (only PT2 holds this certification)
 
-⚠️ **Caution:** Your monthly material needs are typically 4,000–5,000 kg per material. Ordering 20,000+ kg to chase a discount creates massive excess inventory and markdown risk. Make sure the discount math actually works before over-ordering.
+### The Four MCDA Criteria Your Portfolio Is Evaluated On
 
----
+The simulation scores your supplier portfolio on four weighted criteria. You must think about all four — not just cost.
 
-## 8) Late Delivery Probability and Penalty
+| Criterion | Weight | What to Investigate |
+|---|---|---|
+| Responsiveness | 25% | How quickly can your chosen suppliers deliver to Porto? Evaluate lead times across your portfolio. How does transport mode affect this? |
+| Reliability | 30% | What is the combined on-time delivery rate of your portfolio? How does spreading risk across multiple suppliers affect your exposure if one fails? |
+| Sustainability | 25% | What is the weighted average sustainability score of your allocations? Do your suppliers hold the certifications Veloce Wear's retail partners require? |
+| Cost | 20% | Is your total landed cost competitive? Cost matters — but it is the lowest-weighted criterion. Sacrificing the other three to minimize cost is not a winning strategy. |
 
-For each supplier allocation, you choose **# of batches** (1, 2, or 4). Each batch is independently tested for lateness using the **effective reliability** (base + transport bonus + assurance boost).
+⚠️ **Reliability Note:** Reliability is the highest-weighted criterion. It reflects BOTH the on-time rates of individual suppliers AND how many suppliers you use. A single-supplier strategy concentrates risk — the engine rewards portfolios that show resilience through diversification.
 
-- **Late penalty: €500 per late batch**
-- More batches = more chances for individual batches to be late, but each late batch affects a smaller portion of your total order
-- Fewer batches = fewer individual tests but each failure hits harder
+### 💡 Think About This
 
----
+- If you rely on a single supplier for 100% of cotton requirements, what happens if that supplier misses a delivery? How does the simulation penalize this?
+- Nearshore suppliers (PT, TR) have shorter lead times but higher cost per kg. Offshore suppliers (VN, MX) are cheaper but take 24–30 days. Which matters more for Veloce Wear's fast-fashion model?
+- Look at the sustainability scores for the cheapest suppliers vs. the most expensive. Is the gap significant? How does this affect the Mission Alignment score (Category 4)?
+- GOTS certification is only held by one supplier. If Veloce Wear's retail partners require it, how does that constrain your options?
+- How many suppliers should you use? Think about the trade-off between diversification benefit (reduced risk) and the administrative cost of managing more supplier relationships.
 
-## 9) Interactive Visualization (Keep This Open While Deciding)
+### ✍️ Enter Your Supplier Allocations in the Simulation
 
-Module 1 includes an **Interactive 3D Bubble Chart** (React/Recharts) that visualizes supplier trade-offs:
+For each supplier you select, you must enter: **Supplier ID**, **Material type** (cotton or nylon), **kg ordered**, **Transport mode**, **Assurance package**, and **Number of batches**.
 
-- **X-axis:** Cost (€/kg) — left is cheaper
-- **Y-axis:** Quality (higher is better)
-- **Bubble size:** Sustainability (bigger = more sustainable)
-- **Color:** Nearshore = Green, Offshore = Purple
-- **Hover** to see certifications and detailed data
-
-Use it to quickly identify:
-- **Top-left quadrant:** high quality + lower cost ("best value")
-- **Top-right quadrant:** premium suppliers (great quality/sustainability, higher cost)
-- **Large green bubbles:** nearshore suppliers with strong sustainability (mission-aligned)
-
----
-
-## 10) What You Enter in the Simulation
-
-You will enter:
-
-1. **Forecast_A and Forecast_B** (your demand forecast for both SKUs)
-2. **Forecast method** (dropdown: linear regression, moving average, exponential smoothing, seasonal decomposition)
-3. Whether you buy the **Market Report (€10,000)**
-4. A set of **supplier allocations**, each with:
-   - Supplier ID
-   - Material type (cotton or nylon)
-   - kg ordered
-   - Transport mode
-   - Assurance package
-   - Number of batches (1, 2, or 4)
-5. A written **justification** (recommended 400–600+ words)
+- Your total cotton allocation across all suppliers must cover your cotton kg requirement (from Step 2).
+- Your total nylon allocation must cover your nylon kg requirement.
+- After each practice run, check: Are you receiving validation flags? Is your total coverage ≥ 95%?
+- Run multiple scenarios — compare a nearshore-heavy vs offshore-heavy portfolio in the KPI dashboard.
 
 ---
 
-## 11) KPI Dashboard (What You See After Each Run)
+## STEP 4 — Logistics Decisions: Transport, Batching & Risk
 
-After each run the engine calculates and displays:
+For every supplier allocation, you must choose a transport mode, an assurance package, and a batching strategy. These decisions directly affect your total landed cost, lead time, reliability, and carbon footprint.
 
-- Total procurement cost (material + transport + order/admin + report + late penalties)
-- Forecast error % (based on simulated actual vs your forecast)
-- Avg lead time (weighted by kg across suppliers)
-- Avg reliability % (weighted by kg)
-- Avg sustainability (1–5 scale), avg quality (1–5 scale)
-- Total CO₂ index
-- Cotton required vs allocated; nylon required vs allocated
-- Late deliveries (number of late batches)
+### 🔍 Examine the Transport Modes in the Simulation
 
-**Use practice runs to test different strategies.** Compare KPIs across runs to see what improves your score.
+- Open the transport mode selection panel for each allocation.
+- Note which modes are available for nearshore vs. offshore suppliers — they are **NOT interchangeable**.
+- Compare cost per kg, average transit time, CO₂ index, and the reliability uplift each mode provides.
+- Look at the KPI dashboard after a practice run — which cost component is largest: material or transport?
+
+### Transport Mode Reference
+
+| Mode | Allowed Region | Cost (€/kg) | Transit Time | CO₂ Index | Reliability Uplift |
+|---|---|---|---|---|---|
+| Truck | **Nearshore only** (Portugal, Turkey) | 0.18 | 2–5 days | 2 | +0% |
+| Rail | **Nearshore only** (Portugal, Turkey) | 0.12 | 4–8 days | 1 | +1% |
+| Ocean | **Offshore only** (Vietnam, Mexico) | 0.08 | 18–35 days | 3 | +0% |
+| Air | **Offshore only** (Vietnam, Mexico) | 0.95 | 4–9 days | 9 | +2% |
+
+### Assurance Packages
+
+Assurance packages increase on-time delivery probability at a cost premium applied to your material price per kg. Reliability is capped at 99%.
+
+| Package | Price Premium | Reliability Boost | Use Case |
+|---|---|---|---|
+| Standard | +0% | +0% | Default — no additional cost or protection |
+| Priority | +3% | +4% | Recommended for key suppliers or riskier offshore lanes |
+| Premium | +6% | +8% | Maximum protection; reserve for mission-critical allocations |
+
+### Batching Strategy
+
+You can split each supplier order into 1, 2, or 4 batches. Each batch carries an admin/ordering cost of €200. Each batch is independently tested for on-time delivery.
+
+| Batches | Admin Cost | Risk Profile | Consideration |
+|---|---|---|---|
+| 1 | €200 | All-or-nothing — if this batch is late, 100% of your allocation is delayed | Simple, lowest admin cost; highest concentration risk |
+| 2 | €400 | If one batch is late, ~50% of allocation is still on time | Balanced approach for moderate-risk lanes |
+| 4 | €800 | Late deliveries affect only ~25% of allocation per event | Maximum flexibility; significant admin overhead |
+
+### 💡 Think About This
+
+- For a nearshore supplier with 97% on-time delivery: does adding a Priority assurance package meaningfully change your risk? Is the 3% premium justified?
+- Ocean freight has the lowest CO₂ index AND the lowest cost per kg. But look at transit time. What happens to your production schedule if Porto is waiting 28–35 days for materials?
+- Air freight is 10× more expensive than ocean per kg. When would it be worth the cost? Under what conditions would you use it?
+- If you use 4 batches from an offshore supplier with 88% reliability: how many batches would you expect to arrive late? Calculate: (1 – 0.88) × 4 batches × €500 penalty. Is that cost in your budget?
+- What is the total transport cost if you ship 4,000 kg via truck at €0.18/kg vs. rail at €0.12/kg? How does that affect your total landed cost?
+
+### ✍️ Set Logistics Parameters for Each Allocation
+
+- For every supplier allocation: select **Transport Mode** (check eligibility — nearshore vs. offshore)
+- Select **Assurance Package** (Standard / Priority / Premium)
+- Select **Number of Batches** (1 / 2 / 4)
+- After a practice run, review the KPI dashboard: What is your total CO₂ index? How many late deliveries occurred? What was the late penalty €?
+- Experiment: try a high-assurance vs. low-assurance version of the same plan and compare the cost and reliability KPIs.
 
 ---
 
-## 12) Grading Rubric — Total 55 Points
+## STEP 5 — KPI Review & Iteration: Refine Before You Submit
 
-This is **exactly** how the engine awards points. Study it before you start.
+Before your Final Submission, run at least two practice scenarios and compare the KPI dashboards. The KPIs below are what the grading engine uses — understanding them is key to optimizing your score.
+
+### 🔍 After Each Practice Run — Read Every KPI Dashboard Metric
+
+- **Total Procurement Cost (€)** — includes material + transport + admin + report + late penalties
+- **Forecast Error %** — how close was your forecast to the simulated actual demand?
+- **Average Lead Time** (weighted by kg) — how quickly will Porto receive all materials?
+- **Average Reliability %** (weighted by kg) — what proportion of batches arrived on time?
+- **Average Quality Score** (1–5 scale) — portfolio-weighted supplier quality
+- **Average Sustainability Score** (1–5 scale) — portfolio-weighted sustainability
+- **Total CO₂ Index** — carbon footprint of your transport choices
+- **Cotton Coverage % and Nylon Coverage %** — did you order enough material?
+- **Late Deliveries** — how many batches were flagged as late?
+
+### KPI Targets to Guide Your Iteration
+
+| KPI | Direction | Investigation Question |
+|---|---|---|
+| Total Procurement Cost | Lower is better — but not at all costs | Is your cost driven by materials, transport, or penalties? Which lever has the most impact? |
+| Forecast Error % | Lower is better | Does your forecasting method fit the demand pattern? Try recalculating manually. |
+| Avg Reliability % | Higher is better | Which of your supplier/transport combinations is pulling the average down? |
+| Avg Quality Score | Higher is better — examine 1–5 scale | Which supplier in your portfolio has the lowest quality score? How much volume did you assign them? |
+| Avg Sustainability Score | Higher is better — examine 1–5 scale | Are your offshore allocations lowering the portfolio average? Can you rebalance? |
+| Material Coverage | Must be ≥ 95% | Calculate: total kg allocated ÷ kg required. Are you meeting the minimum threshold? |
+| Late Deliveries | Lower is better | Which batches are being flagged? Is it a reliability issue or a batching strategy issue? |
+
+### 💡 Think About This
+
+- Compare your two best practice runs side by side. Which KPIs improved and which got worse? What trade-off did you make?
+- If your reliability is high but your cost is high, which levers can you pull to reduce cost without significantly dropping reliability?
+- If your sustainability score is below target, which allocations are responsible? Can you shift some volume to a higher-sustainability supplier?
+- Is your justification text explaining your trade-offs? Mentioning specific criteria, supplier names, and cost/risk reasoning? The justification counts toward your grade.
+
+### ✍️ Final Submission Checklist
+
+- ✅ Forecast_A and Forecast_B entered (Year 31 values)
+- ✅ Forecasting method selected
+- ✅ Market Report decision confirmed
+- ✅ All supplier allocations entered with kg, transport, assurance, and batches
+- ✅ Cotton kg coverage ≥ 95% of requirement
+- ✅ Nylon kg coverage ≥ 95% of requirement
+- ✅ No invalid transport mode flags (check nearshore vs. offshore constraints)
+- ✅ Justification written — minimum 500 characters, covers your trade-off reasoning across all five criteria
+- ✅ Click FINAL SUBMISSION — this locks Module 1 and triggers Module 2 access
+
+---
+
+## 📊 Grading Rubric — 55 Points Total
+
+The simulation auto-scores your Final Submission across five categories. Understanding each category helps you prioritize where to focus your iteration efforts.
 
 ### Category 1 — Forecasting & Planning Logic (15 pts)
 
-Based on average forecast error (across both SKUs), plus a bonus for method quality.
+Your forecast is compared against a simulated actual demand value generated by the engine. The score is based on how close your forecast came to that actual value (forecast error %).
 
-| Avg Forecast Error | Points |
-|-------------------|--------|
+| Forecast Error % | Points |
+|---|---|
 | ≤ 5% | 15 |
 | 5–10% | 12 |
 | 10–15% | 9 |
 | > 15% | 6 |
 
-**+1 bonus** if you select **linear regression** or **exponential smoothing** as your method (capped at 15 total).
+**+1 bonus** if method = Linear Regression or Exponential Smoothing (capped at 15).
 
-### Category 2 — Supplier Selection / MCDA Method (12 pts)
+*Investigation Tip: Use the simulation's KPI dashboard after practice runs to observe your forecast error %. Does your chosen method consistently produce low error? If not, revisit your forecast value or method selection.*
 
-Based on diversification — number of suppliers with kg > 0.
+---
 
-| Suppliers Used | Points |
-|---------------|--------|
-| 2–4 suppliers | 12 |
-| 5+ suppliers | 9 |
-| 1 supplier | 7 |
-| 0 suppliers | 0 |
+### Category 2 — Supplier Selection / MCDA (12 pts)
+
+Your supplier portfolio is evaluated on four weighted criteria using the MCDA framework. You must perform well across all four — no single criterion drives the entire score.
+
+| Criterion | Weight | What the Engine Evaluates |
+|---|---|---|
+| Responsiveness | 25% | Weighted average lead time of your portfolio (driven by supplier location + transport mode) |
+| Reliability | 30% | Composite of: your suppliers' on-time delivery rates AND the number of alternative suppliers in your portfolio (diversification) |
+| Sustainability | 25% | Weighted average sustainability score (1–5) across all your allocations |
+| Cost | 20% | Your total procurement cost relative to cost benchmarks |
+
+⚠️ **Reliability is the highest-weighted criterion.** It reflects BOTH the on-time rates of individual suppliers AND how many suppliers you use. A single-supplier strategy concentrates risk — the engine rewards portfolios that show resilience through diversification.
+
+---
 
 ### Category 3 — Logistics Trade-offs: Cost + Reliability (12 pts)
 
-**Cost score (0–6 points):**
+This category scores the direct cost and reliability outcomes of your logistics decisions. Score = Cost Sub-score (0–6) + Reliability Sub-score (0–6).
 
-| Total Procurement Cost | Points |
-|-----------------------|--------|
-| < €30,000 | 6 |
-| < €35,000 | 5 |
-| < €40,000 | 4 |
-| ≥ €40,000 | 2 |
+**Cost Sub-score:**
 
-**Reliability score (0–6 points):**
+| Threshold | Points |
+|---|---|
+| Total procurement cost < €30,000 | 6 |
+| Total procurement cost < €35,000 | 5 |
+| Total procurement cost < €40,000 | 4 |
+| Total procurement cost ≥ €40,000 | 2 |
 
-| Weighted Avg Reliability | Points |
-|-------------------------|--------|
-| ≥ 96% | 6 |
-| ≥ 94% | 5 |
-| ≥ 92% | 3 |
-| < 92% | 2 |
+**Reliability Sub-score:**
 
-Trade-offs score = Cost score + Reliability score.
+| Threshold | Points |
+|---|---|
+| Weighted average reliability ≥ 96% | 6 |
+| Weighted average reliability ≥ 94% | 5 |
+| Weighted average reliability ≥ 92% | 3 |
+| Weighted average reliability < 92% | 2 |
+
+*Investigation Tip: These two sub-scores often conflict — high reliability usually requires either nearshore suppliers (higher cost) or assurance packages (price premium). Use practice runs to find the combination that scores well on both simultaneously.*
+
+---
 
 ### Category 4 — Mission Alignment: Quality + Sustainability (8 pts)
 
-| Weighted Avg Quality | Points | Weighted Avg Sustainability | Points |
-|---------------------|--------|---------------------------|--------|
-| ≥ 4.2 | 4 | ≥ 4.2 | 4 |
-| ≥ 4.0 | 3 | ≥ 4.0 | 3 |
-| ≥ 3.5 | 2 | ≥ 3.5 | 2 |
-| < 3.5 | 1 | < 3.5 | 1 |
+Score = Quality sub-score (0–4) + Sustainability sub-score (0–4). Both use the same banding.
+
+| Sub-score | Avg Quality ≥ | Avg Sustainability ≥ |
+|---|---|---|
+| 4 pts | 4.2 | 4.2 |
+| 3 pts | 4.0 | 4.0 |
+| 2 pts | 3.5 | 3.5 |
+| 1 pt | Below 3.5 | Below 3.5 |
+
+*Investigation Tip: Check each supplier's quality and sustainability scores in the reference table. Your portfolio score is the kg-weighted average — a large allocation to a low-scoring supplier pulls your average down more than a small allocation. The bubble chart is the fastest way to spot low-sustainability suppliers visually.*
+
+---
 
 ### Category 5 — Data Validity + Justification (8 pts)
 
-**Validity (0–5 points):** Start with 5 points. Lose 1 point per validation flag (e.g., invalid transport mode). Additional −2 if cotton or nylon coverage < 95%.
+Validity (0–5 pts) + Justification quality (0–3 pts).
 
-**Justification (0–3 points):**
+| Component | Scoring Logic |
+|---|---|
+| Validity | Start with 5 points. Subtract 1 point per validation flag (floor = 0). Subtract additional 2 points if cotton OR nylon coverage < 95%. |
+| Justification | ≥ 500 characters = 3 pts · ≥ 300 characters = 2 pts · ≥ 150 characters = 1 pt · < 150 characters = 0 pts |
 
-| Justification Length | Points |
-|---------------------|--------|
-| ≥ 500 characters | 3 |
-| ≥ 300 characters | 2 |
-| ≥ 150 characters | 1 |
-| < 150 characters | 0 |
-
-Note: This is measured in **characters** (not words). 500 characters is approximately 70–80 words. A well-written 400-word justification easily clears the maximum threshold, so focus on **quality and depth** rather than hitting a word count.
-
-### Letter Grade Mapping
-
-| Points | Grade |
-|--------|-------|
-| ≥ 51 | A |
-| ≥ 45 | B |
-| ≥ 38 | C |
-| ≥ 30 | D |
-| < 30 | F |
+**What Makes a Strong Justification:**
+A high-scoring justification addresses all five sourcing criteria — not just cost. Strong justifications typically explain:
+- **WHY** you chose specific suppliers (referencing quality, sustainability, lead time, certifications)
+- **HOW** your transport choices balance cost, speed, and carbon footprint
+- **WHAT TRADE-OFFS** you made and why (e.g., accepting higher cost for better reliability)
+- **HOW** your plan aligns with Veloce Wear's mission (fast delivery + quality + sustainability)
+- **WHY** you chose your forecasting method for each SKU
 
 ---
 
-## 13) Tips for a Strong Submission
+### Final Grade Mapping
 
-**DO:**
-- Plot the historical data before choosing a method — let the pattern guide your choice
-- Use a formal MCDA method with weights that sum to exactly 100%
-- Diversify across 2–4 suppliers for risk hedging
-- Consider the mission statement when weighting your MCDA criteria
-- Run 3–5 practice simulations to compare strategies
-- Write a detailed justification explaining your reasoning, trade-offs, and mission alignment
-
-**DON'T:**
-- Don't choose a forecasting method without examining the data pattern first
-- Don't use Truck or Rail for Vietnam/Mexico suppliers (validation error)
-- Don't claim "organic cotton" unless you allocate to PT2 (the only GOTS-certified supplier)
-- Don't single-source everything to one supplier (reduced diversification score)
-- Don't chase quantity discounts by massively over-ordering (markdown risk exceeds savings)
-- Don't submit your final without running practice simulations first
+| Letter Grade | Points Required | Performance Level |
+|---|---|---|
+| A | ≥ 51 / 55 | Excellent — strong performance across all five categories |
+| B | ≥ 45 / 55 | Good — minor weaknesses in one or two categories |
+| C | ≥ 38 / 55 | Satisfactory — significant room for improvement |
+| D | ≥ 30 / 55 | Below expectations |
+| F | < 30 / 55 | Insufficient — review all categories and resubmit if allowed |
 
 ---
 
-## 14) Submission Checklist
+## How Module 1 Connects to Modules 2 & 3
 
-Before clicking **Submit Final:**
+Your final submission becomes input data for subsequent modules. Decisions you lock here cannot be changed later.
 
-- [ ] I plotted the historical data and identified patterns for each SKU
-- [ ] I selected a forecasting method that matches each SKU's pattern
-- [ ] I calculated my demand forecasts and can explain my method
-- [ ] I calculated material requirements using BOM × scrap factor
-- [ ] I used a formal MCDA method with documented weights summing to 100%
-- [ ] I selected 2–4 suppliers and allocated kg covering 100% of requirements
-- [ ] My transport modes are valid for each supplier's region
-- [ ] I assigned assurance packages and batching strategies with rationale
-- [ ] My justification addresses forecasting, supplier selection, logistics, and mission alignment
-- [ ] I ran at least 3 practice simulations and reviewed the KPI dashboard
-- [ ] My best practice score is at a level I'm satisfied with
+| Your M1 Decision | Impact on Module 2 (Operations) | Impact on Module 3 (Distribution) |
+|---|---|---|
+| Long supplier lead times | Production start is delayed → MRP must buffer or reschedule | Finished goods arrive later → distribution windows shrink |
+| Low reliability / frequent late deliveries | Material shortages force partial production runs | Service level drops; expediting costs spike |
+| Low-quality materials | Higher rework rate → effective capacity reduced | More defective finished goods flagged at distribution |
+| High-cost transport choices | Inbound cost added to product cost baseline | Less margin buffer available for distribution network design |
 
 ---
 
-*Module 1 Student Guidebook — Veloce Wear SCM Simulation*
+*"Every kilogram you procure, every supplier you qualify, and every lane you open is the foundation of everything else. Module 1 is not a warm-up — it is the supply chain." — Sofia Costa, CSCO*
+
+*Module 1 Student Guidebook — Veloce Wear SCM Simulation · v3*
 `;

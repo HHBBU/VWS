@@ -175,7 +175,6 @@ const TRANSPORT_MODES: Record<string, Record<string, TransportMode>> = {
   nearshore: {
     truck: { costPerKg: 0.18, timeMin: 2, timeMax: 5, co2: 2, reliabilityBonus: 0 },
     rail: { costPerKg: 0.12, timeMin: 4, timeMax: 8, co2: 1, reliabilityBonus: 0.01 },
-    air: { costPerKg: 0.95, timeMin: 4, timeMax: 9, co2: 9, reliabilityBonus: 0.02 },
   },
   offshore: {
     ocean: { costPerKg: 0.08, timeMin: 18, timeMax: 35, co2: 3, reliabilityBonus: 0 },
@@ -464,12 +463,49 @@ export function runModule1Simulation(
     forecastingScore = Math.min(15, forecastingScore + 1);
   }
 
-  // Category 2: Supplier Selection (12 pts)
-  let supplierMethodScore: number;
-  if (numSuppliersUsed >= 2 && numSuppliersUsed <= 4) supplierMethodScore = 12;
-  else if (numSuppliersUsed === 1) supplierMethodScore = 7;
-  else if (numSuppliersUsed > 4) supplierMethodScore = 9;
-  else supplierMethodScore = 0;
+  // Category 2: Supplier Selection / MCDA Composite (12 pts)
+  // Four weighted criteria: Responsiveness (25%), Reliability (30%),
+  // Sustainability (25%), Cost (20%).
+
+  // --- Responsiveness sub-score (25% weight = 3.0 pts max) ---
+  let responsivenessSubScore: number;
+  if (avgLeadTime < 8) responsivenessSubScore = 3.0;
+  else if (avgLeadTime <= 18) responsivenessSubScore = 1.8;
+  else responsivenessSubScore = 0.6;
+
+  // --- Reliability sub-score (30% weight = 3.6 pts max) ---
+  // Blends supplier-count tier (diversification) with avg on-time rate.
+  let countTierNorm: number;
+  if (numSuppliersUsed >= 2 && numSuppliersUsed <= 4) countTierNorm = 1.0;
+  else if (numSuppliersUsed > 4) countTierNorm = 0.75;
+  else if (numSuppliersUsed === 1) countTierNorm = 0.583;
+  else countTierNorm = 0.0;
+
+  let reliabilityRateNorm: number;
+  if (avgReliability >= 0.96) reliabilityRateNorm = 1.0;
+  else if (avgReliability >= 0.94) reliabilityRateNorm = 0.833;
+  else if (avgReliability >= 0.92) reliabilityRateNorm = 0.5;
+  else reliabilityRateNorm = 0.333;
+
+  const reliabilitySubScore = 3.6 * (0.5 * countTierNorm + 0.5 * reliabilityRateNorm);
+
+  // --- Sustainability sub-score (25% weight = 3.0 pts max) ---
+  let sustainabilitySubScore: number;
+  if (avgSustainability >= 4.2) sustainabilitySubScore = 3.0;
+  else if (avgSustainability >= 4.0) sustainabilitySubScore = 2.1;
+  else if (avgSustainability >= 3.5) sustainabilitySubScore = 1.2;
+  else sustainabilitySubScore = 0.6;
+
+  // --- Cost sub-score (20% weight = 2.4 pts max) ---
+  let costSubScore: number;
+  if (totalProcurementCost < 30000) costSubScore = 2.4;
+  else if (totalProcurementCost < 35000) costSubScore = 1.8;
+  else if (totalProcurementCost < 40000) costSubScore = 1.2;
+  else costSubScore = 0.5;
+
+  // --- Composite MCDA score (rounded, capped at 12) ---
+  const mcdaRaw = responsivenessSubScore + reliabilitySubScore + sustainabilitySubScore + costSubScore;
+  let supplierMethodScore = Math.min(12, Math.round(mcdaRaw));
 
   // Category 3: Cost/Service/Risk Trade-offs (12 pts)
   let costScore: number;
