@@ -1,10 +1,7 @@
 /**
  * Module 3 Simulation Engine — Distribution Network & Inventory Policy
  * Veloce Wear SCM Simulation
- * Ported from Python/Flask v2 spec (Opus 4.6 Review) to TypeScript/Express
- *
- * FIXES FROM SPEC:
- *   [CRITICAL-5] M2 service level actually used: modulates lead time variability
+ * v3: EOQ Math Grading + Profit/Markdown Tracking + Service Level Input
  */
 
 // ============================================================
@@ -86,6 +83,14 @@ const STOCKOUT_PENALTY      = 8.00;
 const CARBON_TAX_PER_KG     = 0.05;
 const SIMULATION_DAYS       = 90;
 
+// v3 constants
+const SELLING_PRICE_A        = 29.00;
+const SELLING_PRICE_B        = 69.00;
+const ORDERING_COST_S        = 200.00;
+const HOLDING_COST_ANNUAL_A  = 3.60;
+const HOLDING_COST_ANNUAL_B  = 6.00;
+const MARKDOWN_RATE          = 0.40;
+
 // ============================================================
 // TYPES
 // ============================================================
@@ -97,6 +102,7 @@ export interface M3Decisions {
   serviceMode: "standard" | "express" | "mixed";
   forecastMethod: "moving_average" | "exponential_smoothing" | "seasonal" | "naive";
   justification: string;
+  serviceLevel?: number; // optional 0.80–0.99, default 0.95
 }
 
 export interface M3Context {
@@ -106,16 +112,34 @@ export interface M3Context {
   m2CapacityUtilization: number;
 }
 
+export interface MathBenchmark {
+  refEoq: number;
+  refRop: number;
+  refSs: number;
+  avgDailyDemand: number;
+  avgLeadTime: number;
+  qRatio: number | null;
+  ropRatio: number | null;
+  studentSs: number;
+  qScore: number;
+  ropScore: number;
+  ssScore: number;
+}
+
 export interface M3SimulationResult {
   score: number;
   maxScore: number;
   letterGrade: string;
   scoreBreakdown: {
     performance: number;
+    inventoryMath: number;
+    policyReasoning: number;
+    validity: number;
+    // legacy keys preserved for backward compat
     inventoryLogic: number;
     networkDesign: number;
     justification: number;
-    validity: number;
+    mathBenchmark: MathBenchmark;
   };
   kpis: {
     fillRate: number;
@@ -133,6 +157,14 @@ export interface M3SimulationResult {
     endingInventory: number;
     avgDailyDemand: number;
     m2ServiceLevelPct: number;
+    // v3 new KPIs
+    markdownCost: number;
+    totalRevenue: number;
+    totalProfit: number;
+    profitMarginPct: number;
+    blendedSellingPrice: number;
+    costRatio: number;
+    costVsTarget: number;
   };
   validationFlags: string[];
   feedback: string[];
@@ -160,6 +192,9 @@ export function runModule3Simulation(
   const q          = Math.max(0, Math.floor(decisions.q  ?? 0));
   const justification = (decisions.justification ?? "").trim();
 
+  // Service level input (v3)
+  const serviceLevelInput = Math.max(0.80, Math.min(0.99, decisions.serviceLevel ?? 0.95));
+
   // ── M1/M2 context ──
   const forecastA      = Math.max(5000, m3Context.forecastA  ?? 17800);
   const forecastB      = Math.max(2000, m3Context.forecastB  ?? 9000);
@@ -171,7 +206,6 @@ export function runModule3Simulation(
 
   // ── Network & service config ──
   const net = NETWORK_CONFIGS[networkKey];
-  const svc = SERVICE_MODES[serviceKey];
 
   // ── Initialize inventory ──
   let inventory = rop + q;
@@ -181,6 +215,8 @@ export function runModule3Simulation(
   let totalDemand    = 0, totalFilled  = 0, totalStockouts  = 0;
   let totalHolding   = 0, totalTransport = 0, totalDcCost   = 0;
   let totalShipping  = 0, totalCarbonKg  = 0;
+
+  const svc = SERVICE_MODES[serviceKey];
 
   // ── 90-day daily simulation ──
   for (let day = 0; day < SIMULATION_DAYS; day++) {
@@ -218,7 +254,6 @@ export function runModule3Simulation(
     if (invPosition <= rop && q > 0) {
       const stretchedMax = Math.max(net.leadTimeMin, Math.floor(net.leadTimeMax * leadTimeStretch));
       const range = stretchedMax - net.leadTimeMin;
-      // Use rand() for integer lead time in [leadTimeMin, stretchedMax]
       const leadTime = net.leadTimeMin + Math.floor(rand() * (range + 1));
       pipelineOrders.push({ qty: q, arrivalDay: day + leadTime });
 
@@ -230,15 +265,26 @@ export function runModule3Simulation(
     if (day % 7 === 0) totalDcCost += net.dcCostPerWeek;
   }
 
-  // ── KPIs ──
-  const fillRate       = totalDemand > 0 ? (totalFilled / totalDemand) * 100 : 0;
+  // ── Post-simulation: markdown and profit (v3) ──
+  const totalForecast = forecastA + forecastB;
+  const blendedPrice = totalForecast > 0
+    ? (forecastA * SELLING_PRICE_A + forecastB * SELLING_PRICE_B) / totalForecast
+    : (SELLING_PRICE_A + SELLING_PRICE_B) / 2;
+
+  const markdownCost   = Math.max(0, inventory) * blendedPrice * MARKDOWN_RATE;
   const stockoutCost   = totalStockouts * STOCKOUT_PENALTY;
   const carbonTaxCost  = totalCarbonKg  * CARBON_TAX_PER_KG;
-  const totalCost      = totalHolding + totalTransport + totalDcCost + totalShipping + stockoutCost + carbonTaxCost;
+  const totalCost      = totalHolding + totalTransport + totalDcCost + totalShipping + stockoutCost + carbonTaxCost + markdownCost;
 
-  // ── Grading — 55 points ──
+  const totalRevenue   = totalFilled * blendedPrice;
+  const totalProfit    = totalRevenue - totalCost;
+  const profitMarginPct = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-  // Performance (35 pts): Fill Rate (20) + Cost (15)
+  // ── Grading — 55 points (v3 Rubric) ──
+
+  // Category 1: Performance (30 pts): Fill Rate (20) + Cost Efficiency (10)
+  const fillRate = totalDemand > 0 ? (totalFilled / totalDemand) * 100 : 0;
+
   let fillPoints: number;
   if      (fillRate >= 94) fillPoints = 20;
   else if (fillRate >= 90) fillPoints = 17;
@@ -249,42 +295,102 @@ export function runModule3Simulation(
   const targetCost  = TARGET_COSTS[networkKey];
   const costRatio   = targetCost > 0 ? totalCost / targetCost : 1;
   let costPoints: number;
-  if      (costRatio <= 1.05) costPoints = 15;
-  else if (costRatio <= 1.10) costPoints = 13;
-  else if (costRatio <= 1.15) costPoints = 11;
-  else if (costRatio <= 1.25) costPoints = 8;
-  else                         costPoints = 5;
+  if      (costRatio <= 1.05) costPoints = 10;
+  else if (costRatio <= 1.10) costPoints = 8;
+  else if (costRatio <= 1.15) costPoints = 7;
+  else if (costRatio <= 1.25) costPoints = 5;
+  else                         costPoints = 3;
 
   const performanceScore = fillPoints + costPoints;
 
-  // Inventory Logic (10 pts)
+  // Category 2: Inventory Math Correctness (15 pts)
   const avgDailyDemandActual = totalDemand / SIMULATION_DAYS;
-  const avgLeadTime = (net.leadTimeMin + net.leadTimeMax) / 2;
-  const idealRopMin = avgDailyDemandActual * avgLeadTime;
-  const idealRopMax = avgDailyDemandActual * avgLeadTime * 2;
-  const idealQMin   = avgDailyDemandActual * 5;
-  const idealQMax   = avgDailyDemandActual * 15;
+  const avgLeadTime = (net.leadTimeMin + net.leadTimeMax) / 2.0;
 
-  let invScore = 10;
-  if (rop < idealRopMin * 0.5) invScore -= 4;
-  if (q   < idealQMin   * 0.5) invScore -= 3;
-  if (q   > idealQMax   * 2)   invScore -= 2;
-  invScore = Math.max(0, invScore);
+  // Blended annual holding cost
+  const blendedH = totalForecast > 0
+    ? (forecastA * HOLDING_COST_ANNUAL_A + forecastB * HOLDING_COST_ANNUAL_B) / totalForecast
+    : (HOLDING_COST_ANNUAL_A + HOLDING_COST_ANNUAL_B) / 2;
 
-  // Network Design (5 pts)
+  // Reference EOQ
+  const annualDemandSim = avgDailyDemandActual * 365;
+  const refEoq = blendedH > 0
+    ? Math.sqrt((2 * annualDemandSim * ORDERING_COST_S) / blendedH)
+    : q;
+
+  // Reference Safety Stock (Z=1.28 for 90% SL minimum standard)
+  const sigmaAssumed = avgDailyDemandActual * 0.15;
+  const refSs  = 1.28 * sigmaAssumed * Math.sqrt(avgLeadTime);
+
+  // Reference ROP
+  const refRop = avgDailyDemandActual * avgLeadTime + refSs;
+
+  // Score Q vs EOQ
+  let qScore: number;
+  if (refEoq > 0) {
+    const qRatio = q / refEoq;
+    if      (qRatio >= 0.85 && qRatio <= 1.15) qScore = 6;
+    else if (qRatio >= 0.70 && qRatio <= 1.30) qScore = 4;
+    else if (qRatio >= 0.50 && qRatio <= 1.50) qScore = 2;
+    else                                         qScore = 0;
+  } else {
+    qScore = 3;
+  }
+
+  // Score ROP vs benchmark
+  let ropScore: number;
+  if (refRop > 0) {
+    const ropRatio = rop / refRop;
+    if      (ropRatio >= 0.85 && ropRatio <= 1.15) ropScore = 5;
+    else if (ropRatio >= 0.70 && ropRatio <= 1.30) ropScore = 3;
+    else if (ropRatio >= 0.50 && ropRatio <= 1.50) ropScore = 2;
+    else                                             ropScore = 0;
+  } else {
+    ropScore = 2;
+  }
+
+  // Safety Stock implicit check
+  const leadTimeDemand = avgDailyDemandActual * avgLeadTime;
+  const studentSs      = Math.max(0, rop - leadTimeDemand);
+
+  let ssScore: number;
+  if      (studentSs >= refSs * 0.80) ssScore = 4;
+  else if (studentSs >= refSs * 0.40) ssScore = 2;
+  else if (studentSs > 0)              ssScore = 1;
+  else                                 ssScore = 0;
+
+  const inventoryMathScore = qScore + ropScore + ssScore;
+
+  const mathBenchmark: MathBenchmark = {
+    refEoq:           Math.round(refEoq),
+    refRop:           Math.round(refRop),
+    refSs:            Math.round(refSs),
+    avgDailyDemand:   Math.round(avgDailyDemandActual * 10) / 10,
+    avgLeadTime:      Math.round(avgLeadTime * 10) / 10,
+    qRatio:           refEoq > 0 ? Math.round((q / refEoq) * 1000) / 1000 : null,
+    ropRatio:         refRop > 0 ? Math.round((rop / refRop) * 1000) / 1000 : null,
+    studentSs:        Math.round(studentSs),
+    qScore,
+    ropScore,
+    ssScore,
+  };
+
+  // Category 3: Policy Quality & Reasoning (8 pts)
   let netScore: number;
   if      (fillRate >= 90 && networkKey !== "centralized") netScore = 5;
   else if (fillRate >= 90 && networkKey === "centralized") netScore = 4;
   else if (fillRate <  85 && networkKey === "centralized") netScore = 2;
   else                                                      netScore = 3;
 
-  // Justification (3 pts)
   let justScore: number;
   if      (justification.length >= 400) justScore = 3;
   else if (justification.length >= 250) justScore = 2;
-  else                                   justScore = 1;
+  else if (justification.length >= 100) justScore = 1;
+  else                                   justScore = 0;
 
-  // Validity (2 pts)
+  const policyReasoningScore = netScore + justScore;
+
+  // Category 4: Validity (2 pts)
   const validationFlags: string[] = [];
   let validityScore = 2;
   if (rop <= 0 || q <= 0) {
@@ -297,16 +403,8 @@ export function runModule3Simulation(
   }
   validityScore = Math.max(0, validityScore);
 
-  const scoreBreakdown = {
-    performance:    performanceScore,
-    inventoryLogic: invScore,
-    networkDesign:  netScore,
-    justification:  justScore,
-    validity:       validityScore,
-  };
-
   const totalScore = Math.round(
-    performanceScore + invScore + netScore + justScore + validityScore
+    performanceScore + inventoryMathScore + policyReasoningScore + validityScore
   );
 
   let letterGrade: string;
@@ -315,38 +413,68 @@ export function runModule3Simulation(
   else if (totalScore >= 38) letterGrade = "C";
   else                        letterGrade = "D";
 
-  // ── Feedback ──
+  // ── Feedback (v3) ──
   const feedback: string[] = [];
+
   if (fillRate < 90) {
-    feedback.push(`Fill rate ${fillRate.toFixed(1)}% is below 90%. Increase ROP or Q to reduce stockouts.`);
+    feedback.push(
+      `Fill rate (${fillRate.toFixed(1)}%) is below 90%. Check: Is your ROP high enough to cover lead time demand plus variability? The engine's reference ROP for your network/mode combination is approximately ${Math.round(refRop).toLocaleString()} units.`
+    );
   }
+
   if (costRatio > 1.15) {
-    feedback.push(`Total cost is ${((costRatio - 1) * 100).toFixed(1)}% above target. Consider a lower-cost network strategy or Standard shipping.`);
+    feedback.push(
+      `Total cost is ${((costRatio - 1) * 100).toFixed(1)}% above your network's target (€${targetCost.toLocaleString()}). Review your largest cost component: DC cost, transport, holding, or stockout penalties. Consider whether a different network or service mode combination reduces cost without sacrificing fill rate.`
+    );
   }
+
+  if (qScore < 4) {
+    feedback.push(
+      `Your order quantity Q=${q.toLocaleString()} is outside the ±30% band around the formula-based benchmark (≈${Math.round(refEoq).toLocaleString()} units). Review your EOQ calculation — ensure you used annual demand (daily × 365), S=€200, and the appropriate H value.`
+    );
+  }
+
+  if (ssScore === 0) {
+    feedback.push(
+      "Your ROP appears to include no safety stock buffer (ROP ≈ lead time demand only). This means any day with above-average demand or a late delivery will cause a stockout. Add safety stock: SS = Z × σd × √L, then ROP = μd×L + SS."
+    );
+  }
+
   if (totalCarbonKg > 50000) {
-    const carbonAdvice =
-      serviceKey === "express"
-        ? "Consider switching to Standard or Mixed shipping to reduce environmental impact."
-        : serviceKey === "mixed"
-        ? "Consider Standard shipping to reduce carbon output further."
-        : "Your demand volume generates significant carbon at scale — consider a decentralized network with shorter transport distances.";
-    feedback.push(`High carbon footprint (${Math.round(totalCarbonKg).toLocaleString()} kg CO₂). ${carbonAdvice}`);
+    feedback.push(
+      `Carbon footprint (${Math.round(totalCarbonKg).toLocaleString()} kg CO₂) is high. If using Express mode, consider whether Mixed or Standard would reduce carbon while still meeting your service targets.`
+    );
   }
-  if (rop < idealRopMin) {
-    feedback.push(`ROP (${rop.toLocaleString()}) may be too low for average lead time of ${avgLeadTime.toFixed(1)} days. Suggested minimum: ${Math.round(idealRopMin).toLocaleString()} units.`);
+
+  if (profitMarginPct < 15) {
+    feedback.push(
+      `Profit margin (${profitMarginPct.toFixed(1)}%) is low. High fill rate is not sufficient — Veloce Wear needs margin. Review your largest cost driver and consider whether the current network/mode balance is cost-efficient.`
+    );
   }
+
   if (m2ServiceLevel < 0.92) {
-    feedback.push(`Your M2 service level (${(m2ServiceLevel * 100).toFixed(1)}%) is causing wider lead time variability in distribution. Higher M2 performance in future attempts would improve M3 outcomes.`);
+    feedback.push(
+      `Your M2 service level (${(m2ServiceLevel * 100).toFixed(1)}%) is causing wider lead time variability in distribution. Higher M2 performance in future attempts would improve M3 outcomes.`
+    );
   }
-  if (invScore < 7 && feedback.length < 4) {
-    feedback.push(`Inventory policy (ROP/Q) may be misaligned with demand and lead times. Ideal ROP: ${Math.round(idealRopMin).toLocaleString()}–${Math.round(idealRopMax).toLocaleString()}, Ideal Q: ${Math.round(idealQMin).toLocaleString()}–${Math.round(idealQMax).toLocaleString()} units.`);
-  }
+
+  const costVsTarget = Math.round((costRatio - 1) * 1000) / 10;
 
   return {
     score: totalScore,
     maxScore: 55,
     letterGrade,
-    scoreBreakdown,
+    scoreBreakdown: {
+      performance:    performanceScore,
+      inventoryMath:  inventoryMathScore,
+      policyReasoning: policyReasoningScore,
+      validity:       validityScore,
+      // legacy keys
+      inventoryLogic: inventoryMathScore,
+      networkDesign:  netScore,
+      justification:  justScore,
+      mathBenchmark,
+    },
     kpis: {
       fillRate:              Math.round(fillRate * 10) / 10,
       totalCost:             Math.round(totalCost),
@@ -363,6 +491,14 @@ export function runModule3Simulation(
       endingInventory:       Math.round(inventory),
       avgDailyDemand:        Math.round(dailyDemandAvg),
       m2ServiceLevelPct:     Math.round(m2ServiceLevel * 1000) / 10,
+      // v3 new KPIs
+      markdownCost:          Math.round(markdownCost),
+      totalRevenue:          Math.round(totalRevenue),
+      totalProfit:           Math.round(totalProfit),
+      profitMarginPct:       Math.round(profitMarginPct * 10) / 10,
+      blendedSellingPrice:   Math.round(blendedPrice * 100) / 100,
+      costRatio:             Math.round(costRatio * 1000) / 1000,
+      costVsTarget,
     },
     validationFlags,
     feedback,

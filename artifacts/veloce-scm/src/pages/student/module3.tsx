@@ -43,11 +43,12 @@ import {
   AlertTriangle,
   Network,
   Truck,
-  History,
   Info,
   Leaf,
   BarChart3,
   BookOpen,
+  DollarSign,
+  Calculator,
 } from "lucide-react";
 import { GuideSheet } from "@/components/GuideSheet";
 import { RunHistoryPanel } from "@/components/RunHistoryPanel";
@@ -77,16 +78,30 @@ interface M3Context {
   m2CapacityUtilization: number;
 }
 
+interface MathBenchmark {
+  refEoq: number;
+  refRop: number;
+  refSs: number;
+  avgDailyDemand: number;
+  avgLeadTime: number;
+  qRatio: number | null;
+  ropRatio: number | null;
+  studentSs: number;
+  qScore: number;
+  ropScore: number;
+  ssScore: number;
+}
+
 interface M3Result {
   score: number;
   maxScore: number;
   letterGrade: string;
   scoreBreakdown: {
     performance: number;
-    inventoryLogic: number;
-    networkDesign: number;
-    justification: number;
+    inventoryMath: number;
+    policyReasoning: number;
     validity: number;
+    mathBenchmark: MathBenchmark;
   };
   kpis: {
     fillRate: number;
@@ -104,6 +119,13 @@ interface M3Result {
     endingInventory: number;
     avgDailyDemand: number;
     m2ServiceLevelPct: number;
+    markdownCost: number;
+    totalRevenue: number;
+    totalProfit: number;
+    profitMarginPct: number;
+    blendedSellingPrice: number;
+    costRatio: number;
+    costVsTarget: number;
   };
   validationFlags: string[];
   feedback: string[];
@@ -172,6 +194,7 @@ export default function Module3Page() {
   // Decision state
   const [networkStrategy, setNetworkStrategy] = useState<"centralized" | "hybrid" | "decentralized">("hybrid");
   const [serviceMode, setServiceMode] = useState<"standard" | "express" | "mixed">("standard");
+  const [serviceLevel, setServiceLevel] = useState("0.95");
   const [rop, setRop] = useState(4500);
   const [q, setQ] = useState(9000);
   const [forecastMethod, setForecastMethod] = useState("moving_average");
@@ -181,6 +204,8 @@ export default function Module3Page() {
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<M3Result | null>(null);
   const [runType, setRunType] = useState<"practice" | "final" | null>(null);
+  const [submittedRop, setSubmittedRop] = useState<number | null>(null);
+  const [submittedQ, setSubmittedQ] = useState<number | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
 
   // Load M3 context
@@ -220,6 +245,8 @@ export default function Module3Page() {
       setIsRunning(true);
       setRunType(type);
       setResult(null);
+      setSubmittedRop(rop);
+      setSubmittedQ(q);
 
       const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       const endpoint = type === "practice"
@@ -231,7 +258,15 @@ export default function Module3Page() {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ networkStrategy, serviceMode, rop, q, forecastMethod, justification }),
+          body: JSON.stringify({
+            networkStrategy,
+            serviceMode,
+            serviceLevel: parseFloat(serviceLevel),
+            rop,
+            q,
+            forecastMethod,
+            justification,
+          }),
         });
         const data = await resp.json();
         if (!resp.ok) throw new Error(data.error ?? "Simulation failed");
@@ -257,7 +292,7 @@ export default function Module3Page() {
         setIsRunning(false);
       }
     },
-    [networkStrategy, serviceMode, rop, q, forecastMethod, justification, toast, queryClient],
+    [networkStrategy, serviceMode, serviceLevel, rop, q, forecastMethod, justification, toast, queryClient],
   );
 
   const isSubmitted = moduleData?.isSubmitted ?? false;
@@ -543,7 +578,27 @@ export default function Module3Page() {
                 />
                 <p className="text-xs text-gray-500">
                   Units ordered each time ROP is hit.
-                  Suggested: {Math.round(dailyDemand * 5).toLocaleString()}–{Math.round(dailyDemand * 15).toLocaleString()} units (5–15 days supply)
+                  Use EOQ = √(2DS/H) with S=€200, H=€3.60 (SKU A) / €6.00 (SKU B).
+                </p>
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2 max-w-sm">
+                <Label htmlFor="m3-sl">Target Service Level (for SS calculation)</Label>
+                <Select value={serviceLevel} onValueChange={setServiceLevel}>
+                  <SelectTrigger id="m3-sl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0.80">80% (Z = 0.84) — Minimum protection</SelectItem>
+                    <SelectItem value="0.85">85% (Z = 1.04) — Moderate protection</SelectItem>
+                    <SelectItem value="0.90">90% (Z = 1.28) — Good standard</SelectItem>
+                    <SelectItem value="0.95">95% (Z = 1.65) — Industry standard</SelectItem>
+                    <SelectItem value="0.98">98% (Z = 2.05) — High protection</SelectItem>
+                    <SelectItem value="0.99">99% (Z = 2.33) — Maximum protection</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  The Z-score you used when calculating your Safety Stock (SS = Z × σd × √L).
                 </p>
               </div>
             </CardContent>
@@ -583,14 +638,14 @@ export default function Module3Page() {
                 4. Strategic Justification
               </CardTitle>
               <CardDescription>
-                Explain your network strategy choice, ROP/Q calculations, service mode trade-offs (cost vs. carbon),
-                and how M1/M2 results influenced your decisions.
+                Explain your network strategy choice, ROP/Q calculations (EOQ/SS/ROP formulas), service mode
+                trade-offs, service level reasoning, and how M1/M2 results influenced your decisions.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Textarea
                 rows={8}
-                placeholder="Discuss: Which network strategy did you choose and why? How did you calculate ROP and Q? What are the cost vs. carbon trade-offs of your service mode? How did M1 supplier reliability and M2 service level affect your M3 decisions?..."
+                placeholder="Discuss: Which network strategy did you choose and why? How did you calculate EOQ, Safety Stock, and ROP for each SKU? What service level did you target and why? What are the cost vs. carbon trade-offs of your service mode? How did M1 supplier reliability and M2 service level affect your M3 decisions?..."
                 value={justification}
                 onChange={(e) => setJustification(e.target.value)}
                 className="resize-none"
@@ -602,7 +657,9 @@ export default function Module3Page() {
                     ? " · ✅ Full 3 pts"
                     : justification.length >= 250
                     ? " · ⚡ 2 pts (add more for full marks)"
-                    : " · ⚠️ Under 250 chars — 1 pt only"}
+                    : justification.length >= 100
+                    ? " · ⚠️ Under 250 chars — 1 pt only"
+                    : " · ⚠️ Under 100 chars — 0 pts"}
                 </p>
                 <div className="flex gap-1 text-xs text-gray-400">
                   <span className={justification.length >= 250 ? "text-amber-600 font-medium" : ""}>250</span>
@@ -695,18 +752,17 @@ export default function Module3Page() {
               </CardContent>
             </Card>
 
-            {/* Score breakdown */}
+            {/* Score breakdown (v3) */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Score Breakdown</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { label: "Performance (Fill Rate + Cost)", score: result.scoreBreakdown.performance, max: 35 },
-                  { label: "Inventory Policy Logic (ROP/Q)", score: result.scoreBreakdown.inventoryLogic, max: 10 },
-                  { label: "Network Design Choice",          score: result.scoreBreakdown.networkDesign,  max: 5  },
-                  { label: "Strategic Justification",        score: result.scoreBreakdown.justification,  max: 3  },
-                  { label: "Input Validity",                 score: result.scoreBreakdown.validity,       max: 2  },
+                  { label: "Performance — Fill Rate + Cost Efficiency", score: result.scoreBreakdown.performance, max: 30 },
+                  { label: "Inventory Math — EOQ · Safety Stock · ROP", score: result.scoreBreakdown.inventoryMath, max: 15 },
+                  { label: "Policy Quality & Reasoning",               score: result.scoreBreakdown.policyReasoning, max: 8 },
+                  { label: "Validity & Completeness",                  score: result.scoreBreakdown.validity,        max: 2 },
                 ].map(({ label, score, max }) => (
                   <div key={label}>
                     <div className="flex justify-between text-sm mb-1">
@@ -719,17 +775,53 @@ export default function Module3Page() {
               </CardContent>
             </Card>
 
-            {/* KPI grid */}
+            {/* KPI grid — core metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: "Fill Rate", value: `${result.kpis.fillRate.toFixed(1)}%`, icon: <TrendingUp className="h-4 w-4" />, color: result.kpis.fillRate >= 94 ? "text-emerald-600" : "text-red-600" },
-                { label: "Total Cost", value: `€${result.kpis.totalCost.toLocaleString()}`, icon: <Package className="h-4 w-4" />, color: "text-blue-600" },
-                { label: "Carbon Footprint", value: `${result.kpis.totalCarbonKg.toLocaleString()} kg`, icon: <Leaf className="h-4 w-4" />, color: result.kpis.totalCarbonKg > 50000 ? "text-red-600" : "text-emerald-600" },
-                { label: "Stockouts", value: result.kpis.totalStockouts.toLocaleString(), icon: <AlertTriangle className="h-4 w-4" />, color: result.kpis.totalStockouts > 0 ? "text-red-600" : "text-emerald-600" },
-                { label: "Holding Cost", value: `€${result.kpis.holdingCost.toLocaleString()}`, icon: <Package className="h-4 w-4" />, color: "text-gray-700" },
-                { label: "Transport Cost", value: `€${result.kpis.transportCost.toLocaleString()}`, icon: <Truck className="h-4 w-4" />, color: "text-gray-700" },
-                { label: "DC Cost", value: `€${result.kpis.dcCost.toLocaleString()}`, icon: <Network className="h-4 w-4" />, color: "text-gray-700" },
-                { label: "Ending Inventory", value: result.kpis.endingInventory.toLocaleString(), icon: <Package className="h-4 w-4" />, color: "text-gray-700" },
+                { label: "Fill Rate",       value: `${result.kpis.fillRate.toFixed(1)}%`,          icon: <TrendingUp className="h-4 w-4" />,    color: result.kpis.fillRate >= 94 ? "text-emerald-600" : "text-red-600" },
+                { label: "Total Cost",      value: `€${result.kpis.totalCost.toLocaleString()}`,   icon: <Package className="h-4 w-4" />,       color: "text-blue-600" },
+                { label: "Carbon Footprint",value: `${result.kpis.totalCarbonKg.toLocaleString()} kg`, icon: <Leaf className="h-4 w-4" />,   color: result.kpis.totalCarbonKg > 50000 ? "text-red-600" : "text-emerald-600" },
+                { label: "Stockouts",       value: result.kpis.totalStockouts.toLocaleString(),     icon: <AlertTriangle className="h-4 w-4" />, color: result.kpis.totalStockouts > 0 ? "text-red-600" : "text-emerald-600" },
+              ].map(({ label, value, icon, color }) => (
+                <Card key={label} className="border border-gray-100">
+                  <CardContent className="pt-3 pb-2 px-3">
+                    <div className={`flex items-center gap-1.5 mb-1 ${color} text-xs`}>
+                      {icon}
+                      <span>{label}</span>
+                    </div>
+                    <p className="font-bold text-gray-900 text-sm">{value}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* KPI grid — v3 profit / margin */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                {
+                  label: "Profit Margin %",
+                  value: `${result.kpis.profitMarginPct.toFixed(1)}%`,
+                  icon: <DollarSign className="h-4 w-4" />,
+                  color: result.kpis.profitMarginPct >= 15 ? "text-emerald-600" : "text-red-600",
+                },
+                {
+                  label: "Total Revenue",
+                  value: `€${result.kpis.totalRevenue.toLocaleString()}`,
+                  icon: <TrendingUp className="h-4 w-4" />,
+                  color: "text-blue-600",
+                },
+                {
+                  label: "Markdown Cost",
+                  value: `€${result.kpis.markdownCost.toLocaleString()}`,
+                  icon: <Package className="h-4 w-4" />,
+                  color: result.kpis.markdownCost > 10000 ? "text-red-600" : "text-gray-700",
+                },
+                {
+                  label: "Cost vs Target",
+                  value: `${result.kpis.costVsTarget > 0 ? "+" : ""}${result.kpis.costVsTarget.toFixed(1)}%`,
+                  icon: <BarChart3 className="h-4 w-4" />,
+                  color: result.kpis.costVsTarget <= 5 ? "text-emerald-600" : result.kpis.costVsTarget <= 15 ? "text-amber-600" : "text-red-600",
+                },
               ].map(({ label, value, icon, color }) => (
                 <Card key={label} className="border border-gray-100">
                   <CardContent className="pt-3 pb-2 px-3">
@@ -751,12 +843,13 @@ export default function Module3Page() {
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                   {[
-                    ["Shipping", result.kpis.shippingCost],
-                    ["DC Operations", result.kpis.dcCost],
-                    ["Holding", result.kpis.holdingCost],
-                    ["Transport", result.kpis.transportCost],
-                    ["Stockout Penalties", result.kpis.stockoutCost],
-                    ["Carbon Tax", result.kpis.carbonTaxCost],
+                    ["Shipping",            result.kpis.shippingCost],
+                    ["DC Operations",       result.kpis.dcCost],
+                    ["Holding",             result.kpis.holdingCost],
+                    ["Transport",           result.kpis.transportCost],
+                    ["Stockout Penalties",  result.kpis.stockoutCost],
+                    ["Carbon Tax",          result.kpis.carbonTaxCost],
+                    ["Markdown Cost",       result.kpis.markdownCost],
                   ].map(([label, val]) => (
                     <div key={label as string} className="flex justify-between bg-gray-50 rounded px-2 py-1.5">
                       <span className="text-gray-600">{label}</span>
@@ -766,6 +859,83 @@ export default function Module3Page() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Math Benchmark Detail Card (v3) */}
+            {result.scoreBreakdown.mathBenchmark && (
+              <Card className="border-purple-200 bg-purple-50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm text-purple-800 flex items-center gap-2">
+                    <Calculator className="h-4 w-4" />
+                    Inventory Math Benchmark Detail
+                  </CardTitle>
+                  <p className="text-xs text-purple-600">
+                    How the engine scored your Q and ROP against formula-derived benchmarks
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    <div className="bg-white/70 rounded-lg px-3 py-2 text-xs">
+                      <p className="text-purple-600 mb-0.5">Reference EOQ</p>
+                      <p className="font-bold text-gray-900">{result.scoreBreakdown.mathBenchmark.refEoq.toLocaleString()} units</p>
+                      <p className="text-gray-500 mt-0.5">
+                        Your Q: {(submittedQ ?? q).toLocaleString()} · Ratio: {result.scoreBreakdown.mathBenchmark.qRatio !== null ? result.scoreBreakdown.mathBenchmark.qRatio.toFixed(3) : "–"}
+                      </p>
+                    </div>
+                    <div className="bg-white/70 rounded-lg px-3 py-2 text-xs">
+                      <p className="text-purple-600 mb-0.5">Reference ROP</p>
+                      <p className="font-bold text-gray-900">{result.scoreBreakdown.mathBenchmark.refRop.toLocaleString()} units</p>
+                      <p className="text-gray-500 mt-0.5">
+                        Your ROP: {(submittedRop ?? rop).toLocaleString()} · Ratio: {result.scoreBreakdown.mathBenchmark.ropRatio !== null ? result.scoreBreakdown.mathBenchmark.ropRatio.toFixed(3) : "–"}
+                      </p>
+                    </div>
+                    <div className="bg-white/70 rounded-lg px-3 py-2 text-xs">
+                      <p className="text-purple-600 mb-0.5">Reference SS</p>
+                      <p className="font-bold text-gray-900">{result.scoreBreakdown.mathBenchmark.refSs.toLocaleString()} units</p>
+                      <p className="text-gray-500 mt-0.5">
+                        Your SS: {result.scoreBreakdown.mathBenchmark.studentSs.toLocaleString()} (implicit from ROP − μd×L)
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    {[
+                      { label: "EOQ (Q) Score", score: result.scoreBreakdown.mathBenchmark.qScore,   max: 6 },
+                      { label: "ROP Score",      score: result.scoreBreakdown.mathBenchmark.ropScore, max: 5 },
+                      { label: "Safety Stock",   score: result.scoreBreakdown.mathBenchmark.ssScore,  max: 4 },
+                    ].map(({ label, score, max }) => (
+                      <div key={label} className="bg-white/70 rounded-lg px-3 py-2">
+                        <p className="text-purple-600 mb-0.5">{label}</p>
+                        <p className={`font-bold ${score === max ? "text-emerald-700" : score >= max * 0.5 ? "text-amber-700" : "text-red-700"}`}>
+                          {score}/{max} pts
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-purple-600 mt-2">
+                    Avg daily demand used: {result.scoreBreakdown.mathBenchmark.avgDailyDemand.toLocaleString()} units/day · Avg lead time: {result.scoreBreakdown.mathBenchmark.avgLeadTime} days
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Additional KPI details */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "Holding Cost",     value: `€${result.kpis.holdingCost.toLocaleString()}`,   icon: <Package className="h-4 w-4" />,  color: "text-gray-700" },
+                { label: "Transport Cost",   value: `€${result.kpis.transportCost.toLocaleString()}`, icon: <Truck className="h-4 w-4" />,    color: "text-gray-700" },
+                { label: "DC Cost",          value: `€${result.kpis.dcCost.toLocaleString()}`,        icon: <Network className="h-4 w-4" />,  color: "text-gray-700" },
+                { label: "Ending Inventory", value: result.kpis.endingInventory.toLocaleString(),     icon: <Package className="h-4 w-4" />,  color: "text-gray-700" },
+              ].map(({ label, value, icon, color }) => (
+                <Card key={label} className="border border-gray-100">
+                  <CardContent className="pt-3 pb-2 px-3">
+                    <div className={`flex items-center gap-1.5 mb-1 ${color} text-xs`}>
+                      {icon}
+                      <span>{label}</span>
+                    </div>
+                    <p className="font-bold text-gray-900 text-sm">{value}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
             {/* Validation flags */}
             {result.validationFlags.length > 0 && (

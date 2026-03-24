@@ -328,6 +328,8 @@ function extractM3Decisions(body: any): M3Decisions {
   const validService  = ["standard", "express", "mixed"];
   const validForecast = ["moving_average", "exponential_smoothing", "seasonal", "naive"];
   const safeInt = (v: any, def = 0) => { const n = parseInt(v, 10); return isNaN(n) ? def : Math.max(0, n); };
+  const rawSl = parseFloat(body.serviceLevel);
+  const serviceLevel = isNaN(rawSl) ? 0.95 : Math.max(0.80, Math.min(0.99, rawSl));
   return {
     networkStrategy: validNetwork.includes(body.networkStrategy)   ? body.networkStrategy : "hybrid",
     rop:             safeInt(body.rop,  4500),
@@ -335,6 +337,7 @@ function extractM3Decisions(body: any): M3Decisions {
     serviceMode:     validService.includes(body.serviceMode)        ? body.serviceMode     : "standard",
     forecastMethod:  validForecast.includes(body.forecastMethod)    ? body.forecastMethod  : "moving_average",
     justification:   (body.justification || "").trim(),
+    serviceLevel,
   };
 }
 
