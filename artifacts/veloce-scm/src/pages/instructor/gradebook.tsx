@@ -99,6 +99,7 @@ export default function Gradebook() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["/api/instructor/gradebook"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/instructor/analytics"] });
         setResetTarget(null);
         toast({ title: "Submission Reset", description: "The student can now resubmit." });
       },
