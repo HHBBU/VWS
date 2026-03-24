@@ -203,7 +203,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="font-display font-semibold text-muted-foreground">VeloceWear Simulation</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} University SCM Department. All rights reserved.
+            © 2026 Hasan Uvet, Associate Professor of Supply Chain Management. All rights reserved.
           </p>
         </div>
       </footer>
