@@ -905,7 +905,7 @@ export default function Module1Page() {
                     <Leaf className="w-5 h-5 text-primary" /> 3. Strategic Justification
                   </CardTitle>
                   <CardDescription>
-                    Explain your methodology (MCDA, transport/risk tradeoffs, sustainability alignment). Min 300 chars for 2 pts; 500+ for 3 pts.
+                    Explain your methodology (MCDA, transport/risk tradeoffs, sustainability alignment).
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
