@@ -917,20 +917,6 @@ export default function Module1Page() {
                     disabled={isSubmitted}
                     className="resize-y"
                   />
-                  <div className="flex justify-between mt-2">
-                    <p className="text-xs text-muted-foreground">
-                      {justification.length} characters
-                      {justification.length >= 500 ? " — Full marks (3 pts)" :
-                        justification.length >= 300 ? " — Good (2 pts)" :
-                        justification.length >= 150 ? " — Partial (1 pt)" :
-                        " — Minimal (0 pts)"}
-                    </p>
-                    <div className="flex gap-2 text-xs">
-                      <span className={justification.length >= 150 ? "text-green-500" : "text-muted-foreground"}>150</span>
-                      <span className={justification.length >= 300 ? "text-green-500" : "text-muted-foreground"}>300</span>
-                      <span className={justification.length >= 500 ? "text-green-500" : "text-muted-foreground"}>500</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 

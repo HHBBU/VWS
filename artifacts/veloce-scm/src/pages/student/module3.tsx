@@ -652,27 +652,6 @@ export default function Module3Page() {
                 onChange={(e) => setJustification(e.target.value)}
                 className="resize-none"
               />
-              <div className="flex justify-between items-center mt-2">
-                <p className="text-xs text-gray-500">
-                  {justification.length} characters
-                  {justification.length >= 400
-                    ? " · ✅ Full 3 pts"
-                    : justification.length >= 250
-                    ? " · ⚡ 2 pts (add more for full marks)"
-                    : justification.length >= 100
-                    ? " · ⚠️ Under 250 chars — 1 pt only"
-                    : " · ⚠️ Under 100 chars — 0 pts"}
-                </p>
-                <div className="flex gap-1 text-xs text-gray-400">
-                  <span className={justification.length >= 250 ? "text-amber-600 font-medium" : ""}>250</span>
-                  <span>/</span>
-                  <span className={justification.length >= 400 ? "text-emerald-600 font-medium" : ""}>400</span>
-                </div>
-              </div>
-              <Progress
-                value={Math.min(100, (justification.length / 400) * 100)}
-                className="h-1.5 mt-1"
-              />
             </CardContent>
           </Card>
 

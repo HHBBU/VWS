@@ -1069,8 +1069,7 @@ export default function Module2Page() {
               </CardTitle>
               <CardDescription>
                 Explain your S&OP strategy, bottleneck analysis, improvement choices, and how you
-                accounted for M1 supplier variability. ≥500 characters for full points (5 pts).
-                ≥300 for partial (4 pts). Include two MRP "need → release" examples (one SKU A,
+                accounted for M1 supplier variability. Include two MRP "need → release" examples (one SKU A,
                 one SKU B).
               </CardDescription>
             </CardHeader>
@@ -1082,26 +1081,6 @@ export default function Module2Page() {
                 placeholder="Explain your 8-week production plan, how you identified and addressed the bottleneck, why you chose your training and lean investments, how you handled M1 lead time and reliability data, and why your capacity mode / lot sizing / safety stock / priority rule fit the Veloce Wear fast-fashion context. Include two MRP 'need → release' examples (one SKU A, one SKU B)."
                 className="resize-none"
               />
-              <div className="flex justify-between mt-1.5 text-xs text-slate-500">
-                <span>
-                  {justification.length < 300 && (
-                    <span className="text-red-500">
-                      Need {300 - justification.length} more characters for 4 pts
-                    </span>
-                  )}
-                  {justification.length >= 300 && justification.length < 500 && (
-                    <span className="text-yellow-600">
-                      {500 - justification.length} more characters for full 5 pts
-                    </span>
-                  )}
-                  {justification.length >= 500 && (
-                    <span className="text-green-600 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" /> Full justification points earned
-                    </span>
-                  )}
-                </span>
-                <span>{justification.length} characters</span>
-              </div>
             </CardContent>
           </Card>
 
