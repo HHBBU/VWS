@@ -380,4 +380,38 @@ router.delete("/extensions/:extensionId", requireInstructor, async (req: Request
   return res.json(MessageResponseSchema.parse({ message: "Extension removed" }));
 });
 
+router.delete("/submissions/:userId/:moduleKey", requireInstructor, async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId as string, 10);
+  const moduleKey = req.params.moduleKey as string;
+
+  if (isNaN(userId)) {
+    return res.status(400).json(ErrorResponseSchema.parse({ error: "Invalid user ID" }));
+  }
+
+  if (!["M1", "M2", "M3"].includes(moduleKey)) {
+    return res.status(400).json(ErrorResponseSchema.parse({ error: "Invalid module key" }));
+  }
+
+  const [student] = await db
+    .select()
+    .from(usersTable)
+    .where(and(eq(usersTable.id, userId), eq(usersTable.role, "student")))
+    .limit(1);
+
+  if (!student) {
+    return res.status(404).json(ErrorResponseSchema.parse({ error: "Student not found" }));
+  }
+
+  await db
+    .delete(moduleSubmissionsTable)
+    .where(
+      and(
+        eq(moduleSubmissionsTable.userId, userId),
+        eq(moduleSubmissionsTable.moduleKey, moduleKey as "M1" | "M2" | "M3"),
+      ),
+    );
+
+  return res.json(MessageResponseSchema.parse({ message: "Submission reset successfully" }));
+});
+
 export default router;

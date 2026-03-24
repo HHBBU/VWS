@@ -1353,3 +1353,87 @@ export const useRemoveExtension = <
 > => {
   return useMutation(getRemoveExtensionMutationOptions(options));
 };
+
+/**
+ * @summary Reset a student's final submission for a module
+ */
+export const getResetStudentSubmissionUrl = (userId: number, moduleKey: string) => {
+  return `/api/instructor/submissions/${userId}/${moduleKey}`;
+};
+
+export const resetStudentSubmission = async (
+  userId: number,
+  moduleKey: string,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getResetStudentSubmissionUrl(userId, moduleKey), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getResetStudentSubmissionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetStudentSubmission>>,
+    TError,
+    { userId: number; moduleKey: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resetStudentSubmission>>,
+  TError,
+  { userId: number; moduleKey: string },
+  TContext
+> => {
+  const mutationKey = ["resetStudentSubmission"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resetStudentSubmission>>,
+    { userId: number; moduleKey: string }
+  > = (props) => {
+    const { userId, moduleKey } = props ?? {};
+    return resetStudentSubmission(userId, moduleKey, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResetStudentSubmissionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof resetStudentSubmission>>
+>;
+
+export type ResetStudentSubmissionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Reset a student's final submission for a module
+ */
+export const useResetStudentSubmission = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetStudentSubmission>>,
+    TError,
+    { userId: number; moduleKey: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof resetStudentSubmission>>,
+  TError,
+  { userId: number; moduleKey: string },
+  TContext
+> => {
+  return useMutation(getResetStudentSubmissionMutationOptions(options));
+};

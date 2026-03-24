@@ -347,6 +347,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
 
+  /instructor/submissions/{userId}/{moduleKey}:
+    delete:
+      operationId: resetStudentSubmission
+      tags: [instructor]
+      summary: Reset a student's final submission for a module
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: moduleKey
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [M1, M2, M3]
+      responses:
+        "200":
+          description: Submission reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
 components:
   schemas:
     HealthStatus:

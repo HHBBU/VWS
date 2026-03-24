@@ -1,8 +1,20 @@
 import { useState, useMemo } from "react";
-import { useGetGradebook, useGetInstructorAnalytics } from "@workspace/api-client-react";
+import { useGetGradebook, useGetInstructorAnalytics, useResetStudentSubmission } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -18,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Download, Users, TrendingUp, Filter, CheckCircle2, Clock, Minus, Award } from "lucide-react";
+import { Search, Download, Users, TrendingUp, Filter, CheckCircle2, Clock, Minus, Award, RotateCcw } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -67,6 +79,14 @@ export default function Gradebook() {
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [resetTarget, setResetTarget] = useState<{
+    userId: number;
+    name: string;
+    moduleKey: string;
+  } | null>(null);
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data, isLoading } = useGetGradebook({
     search: search || undefined,
@@ -74,6 +94,19 @@ export default function Gradebook() {
   });
 
   const { data: analytics, isLoading: analyticsLoading } = useGetInstructorAnalytics();
+
+  const resetMutation = useResetStudentSubmission({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/instructor/gradebook"] });
+        setResetTarget(null);
+        toast({ title: "Submission Reset", description: "The student can now resubmit." });
+      },
+      onError: () => {
+        toast({ variant: "destructive", title: "Error", description: "Failed to reset submission." });
+      },
+    },
+  });
 
   const handleExport = () => {
     window.open("/api/instructor/gradebook/export", "_blank");
@@ -377,6 +410,15 @@ export default function Gradebook() {
                         <span className="font-medium text-muted-foreground">
                           {student.m1Status === "submitted" ? student.m1Score : "-"}
                         </span>
+                        {student.m1Status === "submitted" && (
+                          <button
+                            title="Reset M1 submission"
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                            onClick={() => setResetTarget({ userId: student.id, name: student.name, moduleKey: "M1" })}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
@@ -385,6 +427,15 @@ export default function Gradebook() {
                         <span className="font-medium text-muted-foreground">
                           {student.m2Status === "submitted" ? student.m2Score : "-"}
                         </span>
+                        {student.m2Status === "submitted" && (
+                          <button
+                            title="Reset M2 submission"
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                            onClick={() => setResetTarget({ userId: student.id, name: student.name, moduleKey: "M2" })}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
@@ -393,6 +444,15 @@ export default function Gradebook() {
                         <span className="font-medium text-muted-foreground">
                           {student.m3Status === "submitted" ? student.m3Score : "-"}
                         </span>
+                        {student.m3Status === "submitted" && (
+                          <button
+                            title="Reset M3 submission"
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                            onClick={() => setResetTarget({ userId: student.id, name: student.name, moduleKey: "M3" })}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-bold text-primary">{student.total}</TableCell>
@@ -403,6 +463,34 @@ export default function Gradebook() {
           </Table>
         </div>
       </Card>
+
+      <AlertDialog open={!!resetTarget} onOpenChange={(open) => { if (!open) setResetTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Submission?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the final submission for{" "}
+              <strong>{resetTarget?.name}</strong> — module{" "}
+              <strong>{resetTarget?.moduleKey}</strong>. Their score will be cleared and
+              they will be able to resubmit. Practice run history is preserved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={resetMutation.isPending}
+              onClick={() => {
+                if (resetTarget) {
+                  resetMutation.mutate({ userId: resetTarget.userId, moduleKey: resetTarget.moduleKey });
+                }
+              }}
+            >
+              {resetMutation.isPending ? "Resetting…" : "Reset Submission"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
