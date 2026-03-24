@@ -43,9 +43,11 @@ import {
   AlertTriangle,
   BarChart3,
   Settings,
-  History,
   Info,
   BookOpen,
+  Wrench,
+  GraduationCap,
+  LayoutGrid,
 } from "lucide-react";
 import { GuideSheet } from "@/components/GuideSheet";
 import { RunHistoryPanel } from "@/components/RunHistoryPanel";
@@ -71,9 +73,6 @@ const CAPACITY_DAILY: Record<string, number> = {
   two_shift: 1500,
 };
 
-// Weekly production targets scaled for corrected capacity (800-1500 units/day)
-// Monthly demand: ~18,500 A + 9,200 B = ~27,700/mo → ~6,400/week combined
-// Overtime mode (1,050/day × 7 = 7,350/week) handles this comfortably
 const DEFAULT_SOP_A = [4200, 4300, 4400, 4400, 4500, 4500, 4100, 3900];
 const DEFAULT_SOP_B = [2100, 2150, 2200, 2200, 2250, 2250, 2050, 1950];
 
@@ -94,9 +93,15 @@ interface SimResult {
   scoreBreakdown: {
     performance: number;
     sopQuality: number;
-    mrpLogic: number;
+    bottleneckScore: number;
+    leanQualityScore: number;
     justification: number;
-    validity: number;
+    bottleneckDetail?: {
+      true_bottleneck: string;
+      true_bottleneck_util: number;
+      wc_utilizations: Record<string, number>;
+      student_target: string | null;
+    };
   };
   kpis: {
     serviceLevel: number;
@@ -114,6 +119,14 @@ interface SimResult {
     endingInventoryA: number;
     endingInventoryB: number;
     weeklyCapacity: number;
+    scrapReworkCost: number;
+    trainingCost: number;
+    leanCost: number;
+    capacityImprovementCost: number;
+    totalInvestmentCost: number;
+    costRatio: number;
+    costVsTargetPct: number;
+    trueBottleneck: string;
   };
   validationFlags: string[];
   feedback: string[];
@@ -259,7 +272,7 @@ function SopChart({
         </ResponsiveContainer>
         <div className="mt-2 p-3 bg-indigo-50 rounded-lg text-xs text-indigo-700">
           <strong>Tip:</strong> Aim for total weekly production (SKU A + B) to stay below the red
-          line each week. Utilization 80–95% earns maximum MRP Logic points.
+          line each week. Utilization 80–95% earns maximum capacity efficiency points.
         </div>
       </CardContent>
     </Card>
@@ -268,6 +281,16 @@ function SopChart({
 
 function ResultsPanel({ result }: { result: SimResult }) {
   const bd = result.scoreBreakdown;
+
+  const costVsTarget = result.kpis.costVsTargetPct;
+  const costVsTargetLabel =
+    costVsTarget == null ? "—"
+    : costVsTarget > 0 ? `+${costVsTarget.toFixed(1)}% over`
+    : `${Math.abs(costVsTarget).toFixed(1)}% under`;
+
+  const bottleneckName = result.kpis.trueBottleneck
+    ? result.kpis.trueBottleneck.charAt(0).toUpperCase() + result.kpis.trueBottleneck.slice(1)
+    : "—";
 
   return (
     <motion.div
@@ -305,7 +328,7 @@ function ResultsPanel({ result }: { result: SimResult }) {
         </CardContent>
       </Card>
 
-      {/* Score breakdown */}
+      {/* Score breakdown — v3 rubric */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
@@ -314,17 +337,17 @@ function ResultsPanel({ result }: { result: SimResult }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {[
-            { label: "Performance Outcomes", key: "performance" as const, max: 30 },
-            { label: "S&OP Planning Quality", key: "sopQuality" as const, max: 10 },
-            { label: "MRP Logic & Utilization", key: "mrpLogic" as const, max: 8 },
-            { label: "Strategic Justification", key: "justification" as const, max: 5 },
-            { label: "Plan Validity", key: "validity" as const, max: 2 },
-          ].map(({ label, key, max }) => {
-            const val = bd?.[key] ?? 0;
+          {([
+            { label: "Performance Outcomes (Service + Cost)", value: bd.performance, max: 20 },
+            { label: "S&OP Planning Quality", value: bd.sopQuality, max: 10 },
+            { label: "Bottleneck & Capacity Decision", value: bd.bottleneckScore, max: 10 },
+            { label: "Lean · Quality · Layout Decisions", value: bd.leanQualityScore, max: 10 },
+            { label: "Strategic Justification", value: bd.justification, max: 5 },
+          ] as const).map(({ label, value, max }) => {
+            const val = value ?? 0;
             const pct = Math.min(100, (val / max) * 100);
             return (
-              <div key={key}>
+              <div key={label}>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-slate-700">{label}</span>
                   <span className="font-semibold">
@@ -335,6 +358,31 @@ function ResultsPanel({ result }: { result: SimResult }) {
               </div>
             );
           })}
+
+          {/* Bottleneck detail */}
+          {bd.bottleneckDetail && (
+            <div className="mt-3 pt-3 border-t">
+              <p className="text-xs font-semibold text-slate-600 mb-2">Bottleneck Analysis</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                {Object.entries(bd.bottleneckDetail.wc_utilizations).map(([wc, util]) => (
+                  <div
+                    key={wc}
+                    className={`text-center rounded p-1.5 border ${
+                      wc === bd.bottleneckDetail!.true_bottleneck
+                        ? "bg-red-50 border-red-200 font-bold text-red-700"
+                        : "bg-slate-50 border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    <div className="capitalize">{wc}</div>
+                    <div>{util}%</div>
+                    {wc === bd.bottleneckDetail!.true_bottleneck && (
+                      <div className="text-red-600 font-medium">Bottleneck</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -357,6 +405,11 @@ function ResultsPanel({ result }: { result: SimResult }) {
               { label: "Production A", value: fmt(result.kpis.totalProductionA), highlight: false },
               { label: "Production B", value: fmt(result.kpis.totalProductionB), highlight: false },
               { label: "Ending Inv A", value: fmt(result.kpis.endingInventoryA), highlight: false },
+              // v3 new KPI tiles
+              { label: "Cost vs Target", value: costVsTargetLabel, highlight: (result.kpis.costVsTargetPct ?? 999) <= 5 },
+              { label: "True Bottleneck", value: bottleneckName, highlight: false },
+              { label: "Scrap/Rework Cost", value: euro(result.kpis.scrapReworkCost), highlight: false },
+              { label: "Total Investment", value: euro(result.kpis.totalInvestmentCost), highlight: false },
             ].map(({ label, value, highlight }) => (
               <div
                 key={label}
@@ -375,13 +428,16 @@ function ResultsPanel({ result }: { result: SimResult }) {
           {/* Cost breakdown */}
           <div className="mt-4 pt-4 border-t">
             <p className="text-xs font-semibold text-slate-600 mb-2">Cost Breakdown</p>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {[
                 ["Capacity", euro(result.kpis.capacityCost)],
                 ["Holding", euro(result.kpis.holdingCost)],
                 ["Changeovers", euro(result.kpis.changeoverCost)],
                 ["Stockouts", euro(result.kpis.stockoutCost)],
                 ["Markdown", euro(result.kpis.markdownCost)],
+                ["Training", euro(result.kpis.trainingCost)],
+                ["Lean", euro(result.kpis.leanCost)],
+                ["Capacity Impr.", euro(result.kpis.capacityImprovementCost)],
               ].map(([label, val]) => (
                 <div key={label} className="text-center">
                   <div className="text-slate-500">{label}</div>
@@ -453,6 +509,14 @@ export default function Module2Page() {
   const [lotSize, setLotSize] = useState<string>("medium");
   const [priorityRule, setPriorityRule] = useState<string>("balanced");
   const [safetyStock, setSafetyStock] = useState<string>("6_dos");
+
+  // ── v3 new decision state ──
+  const [bottleneckTarget, setBottleneckTarget] = useState<string>("none");
+  const [trainingChoice, setTrainingChoice] = useState<string>("none");
+  const [layoutChoice, setLayoutChoice] = useState<string>("functional");
+  const [flowChoice, setFlowChoice] = useState<string>("cellular");
+  const [leanChoice, setLeanChoice] = useState<string>("none");
+
   const [justification, setJustification] = useState<string>("");
 
   // ── App state ──
@@ -489,8 +553,14 @@ export default function Module2Page() {
       priorityRule,
       safetyStock,
       justification,
+      bottleneckTarget,
+      trainingChoice,
+      layoutChoice,
+      flowChoice,
+      leanChoice,
     }),
-    [sopA, sopB, capacityMode, lotSize, priorityRule, safetyStock, justification],
+    [sopA, sopB, capacityMode, lotSize, priorityRule, safetyStock, justification,
+     bottleneckTarget, trainingChoice, layoutChoice, flowChoice, leanChoice],
   );
 
   const invalidate = useCallback(() => {
@@ -575,10 +645,10 @@ export default function Module2Page() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Factory className="w-6 h-6 text-indigo-600" />
-              Module 2: Operations Planning & MRP
+              Module 2: Operations Planning & Manufacturing
             </h1>
             <p className="text-slate-500 text-sm mt-1">
-              Veloce Wear Manufacturing — Porto Factory · 56-Day Production Simulation
+              Sofia Costa · Porto Manufacturing Campus · 56-Day Production Simulation
             </p>
             {!isSubmitted && moduleData?.windowEnabled !== false && (() => {
               const windowEnd = moduleData?.windowEnd ? new Date(moduleData.windowEnd) : null;
@@ -844,16 +914,162 @@ export default function Module2Page() {
             </CardContent>
           </Card>
 
-          {/* 3. Justification */}
+          {/* 3 — Bottleneck & Capacity Improvement */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wrench className="w-4 h-4 text-indigo-600" />
+                3 — Bottleneck & Capacity Improvement
+              </CardTitle>
+              <CardDescription>
+                Review the work-center SAM data in the Student Guide. Which work center is your
+                bottleneck? Select an improvement — or choose "No improvement" if utilization is
+                acceptable. Investment costs are included in total cost.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Capacity Improvement Decision</Label>
+                <Select value={bottleneckTarget} onValueChange={setBottleneckTarget}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No improvement needed (€0)</SelectItem>
+                    <SelectItem value="cutting_modify">Modify Cutting — Auto-spreader (+20%, €18,000)</SelectItem>
+                    <SelectItem value="cutting_buy">Buy New Cutting Table (+45%, €42,000)</SelectItem>
+                    <SelectItem value="dyeing_modify">Modify Dyeing — Batch controller (+20%, €26,000)</SelectItem>
+                    <SelectItem value="dyeing_buy">Buy New Dye Vessel/Line (+45%, €65,000)</SelectItem>
+                    <SelectItem value="sewing_modify">Modify Sewing — Line balancing aids (+20%, €22,000)</SelectItem>
+                    <SelectItem value="sewing_buy">Buy New Sewing Module (+50%, €95,000)</SelectItem>
+                    <SelectItem value="packaging_modify">Modify Packaging — Conveyor/scanner (+20%, €14,000)</SelectItem>
+                    <SelectItem value="packaging_buy">Buy New Packing Line (+45%, €30,000)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-lg text-xs text-amber-700 border border-amber-200">
+                <strong>Grading note:</strong> Choosing the correct bottleneck work center earns up to 10 pts.
+                Choosing the wrong work center or missing a critical bottleneck results in partial credit.
+                Use the work-center SAM table in the Student Guide to identify the true bottleneck.
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 4 — Workforce Training & Quality */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-indigo-600" />
+                4 — Workforce Training & Quality Improvement
+              </CardTitle>
+              <CardDescription>
+                Current scrap/rework rates: SKU A = 4.5%, SKU B = 5.5%. Training reduces these
+                losses and improves effective output. Costs are one-time investments included in
+                total cost.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Training Investment</Label>
+                <Select value={trainingChoice} onValueChange={setTrainingChoice}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No formal training (€0)</SelectItem>
+                    <SelectItem value="green_belt">Six Sigma Green Belt — Team Training (€7,500 · Scrap ↓20%, Rework ↓15%, Setup ↓5%)</SelectItem>
+                    <SelectItem value="black_belt">Six Sigma Black Belt — Improvement Project (€16,000 · Scrap ↓35%, Rework ↓25%, Setup ↓8%)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-700 border border-blue-100">
+                <strong>Effect:</strong> Training reduces the lot-sizing yield loss and scrap/rework cost.
+                Check your Scrap/Rework Cost KPI after a practice run to evaluate whether training investment is justified.
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 5 — Factory Layout & Lean */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LayoutGrid className="w-4 h-4 text-indigo-600" />
+                5 — Factory Layout & Lean Initiatives
+              </CardTitle>
+              <CardDescription>
+                Layout and flow affect changeover efficiency. Lean initiatives reduce holding cost,
+                defects, or downtime. All costs are one-time investments included in total cost.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Factory Layout</Label>
+                  <Select value={layoutChoice} onValueChange={setLayoutChoice}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="functional">Functional Layout — shared equipment by function</SelectItem>
+                      <SelectItem value="product">Product Layout — dedicated line per SKU</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500">
+                    Functional + Cellular = 20% fewer effective changeovers
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Production Flow Model</Label>
+                  <Select value={flowChoice} onValueChange={setFlowChoice}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cellular">Cellular Manufacturing — mini-lines per product family</SelectItem>
+                      <SelectItem value="batch">Traditional Batch Production</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500">
+                    Supports style changeover flexibility and WIP reduction
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Lean / Quality-at-Source Initiative</Label>
+                <Select value={leanChoice} onValueChange={setLeanChoice}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No lean initiative (€0)</SelectItem>
+                    <SelectItem value="5s">5S + Visual Management (€3,000 · Motion losses ↓5%)</SelectItem>
+                    <SelectItem value="poka_yoke">Poka-Yoke Devices (€6,500 · Sewing/packing defects ↓25%)</SelectItem>
+                    <SelectItem value="andon">Andon Lights (€4,500 · Downtime ↓8%; disruptions partially recovered)</SelectItem>
+                    <SelectItem value="poka_andon_bundle">Poka-Yoke + Andon Bundle (€10,000 · Best quality-at-source)</SelectItem>
+                    <SelectItem value="lean_flow">Lean Flow Package — Kanban + Standard Work + Visual Control (€12,000 · WIP ↓25%, Cycle time ↓10%)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500">
+                  Lean reduces holding cost (lean flow), disruption impact (andon), or defects (poka-yoke)
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 6 — Strategic Justification */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-indigo-600" />
-                3 — Strategic Justification
+                6 — Strategic Justification
               </CardTitle>
               <CardDescription>
-                Explain your S&OP strategy and how you accounted for M1 supplier variability.
-                ≥500 characters for full points (5 pts). ≥300 for partial (4 pts).
+                Explain your S&OP strategy, bottleneck analysis, improvement choices, and how you
+                accounted for M1 supplier variability. ≥500 characters for full points (5 pts).
+                ≥300 for partial (4 pts). Include two MRP "need → release" examples (one SKU A,
+                one SKU B).
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -861,7 +1077,7 @@ export default function Module2Page() {
                 value={justification}
                 onChange={(e) => setJustification(e.target.value)}
                 rows={8}
-                placeholder="Explain your 8-week production plan, how you handled M1 lead time and reliability data, why you chose your capacity mode / lot sizing / safety stock / priority rule, and how your decisions align with Veloce Wear's mission of quality, sustainability, and supply chain agility..."
+                placeholder="Explain your 8-week production plan, how you identified and addressed the bottleneck, why you chose your training and lean investments, how you handled M1 lead time and reliability data, and why your capacity mode / lot sizing / safety stock / priority rule fit the Veloce Wear fast-fashion context. Include two MRP 'need → release' examples (one SKU A, one SKU B)."
                 className="resize-none"
               />
               <div className="flex justify-between mt-1.5 text-xs text-slate-500">

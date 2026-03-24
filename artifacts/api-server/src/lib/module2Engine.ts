@@ -1,11 +1,9 @@
 /**
  * Module 2 Simulation Engine — Operations Planning & MRP
  * Veloce Wear SCM Simulation
- * Ported from Python/Flask v2 spec (Opus 4.6 Review) to TypeScript/Express
- *
- * FIXES FROM SPEC:
- *   [CRITICAL-1] Daily capacity rescaled: Standard=800, Overtime=1050, Two-Shift=1500 units/day
- *   [CRITICAL-3] S&OP quality scored vs expected baseline, NOT stochastic demand
+ * v3 Upgrade: New decisions (bottleneck, training, layout, flow, lean),
+ *             new grading rubric (20/10/10/10/5 = 55),
+ *             new KPIs (scrap/rework cost, investment costs, cost ratio, true bottleneck)
  */
 
 // ============================================================
@@ -39,7 +37,7 @@ function boxMullerNormal(rand: () => number, mean: number, sigma: number): numbe
 }
 
 // ============================================================
-// CONSTANTS — v2 FIXED CAPACITY VALUES
+// CONSTANTS
 // ============================================================
 
 const CAPACITY_MODES = {
@@ -68,25 +66,83 @@ const TARGET_COSTS = {
   two_shift: 100000,
 } as const;
 
+// ── v3 Work center data for bottleneck calculation ──
+const WORK_CENTERS = {
+  cutting:   { capacity_min_day: 1500, sam_a: 0.8, sam_b: 1.1 },
+  dyeing:    { capacity_min_day: 1400, sam_a: 0.7, sam_b: 1.0 },
+  sewing:    { capacity_min_day: 3100, sam_a: 3.2, sam_b: 4.8 },
+  packaging: { capacity_min_day: 1100, sam_a: 0.5, sam_b: 0.7 },
+} as const;
+
+// ── v3 Capacity improvement options ──
+const CAPACITY_IMPROVEMENTS = {
+  none:             { work_center: null,        cost: 0,     multiplier: 1.0  },
+  cutting_modify:   { work_center: "cutting",   cost: 18000, multiplier: 1.20 },
+  cutting_buy:      { work_center: "cutting",   cost: 42000, multiplier: 1.45 },
+  dyeing_modify:    { work_center: "dyeing",    cost: 26000, multiplier: 1.20 },
+  dyeing_buy:       { work_center: "dyeing",    cost: 65000, multiplier: 1.45 },
+  sewing_modify:    { work_center: "sewing",    cost: 22000, multiplier: 1.20 },
+  sewing_buy:       { work_center: "sewing",    cost: 95000, multiplier: 1.50 },
+  packaging_modify: { work_center: "packaging", cost: 14000, multiplier: 1.20 },
+  packaging_buy:    { work_center: "packaging", cost: 30000, multiplier: 1.45 },
+} as const;
+
+// ── v3 Training options ──
+const TRAINING_OPTIONS = {
+  none:        { cost: 0,     scrap_reduction: 0.0,  rework_reduction: 0.0,  setup_reduction: 0.0  },
+  green_belt:  { cost: 7500,  scrap_reduction: 0.20, rework_reduction: 0.15, setup_reduction: 0.05 },
+  black_belt:  { cost: 16000, scrap_reduction: 0.35, rework_reduction: 0.25, setup_reduction: 0.08 },
+} as const;
+
+// ── v3 Lean options ──
+const LEAN_OPTIONS = {
+  none:              { cost: 0,     holding_factor: 1.0,  defect_factor: 1.0,  downtime_factor: 1.0  },
+  "5s":              { cost: 3000,  holding_factor: 0.97, defect_factor: 1.0,  downtime_factor: 1.0  },
+  poka_yoke:         { cost: 6500,  holding_factor: 1.0,  defect_factor: 0.75, downtime_factor: 1.0  },
+  andon:             { cost: 4500,  holding_factor: 1.0,  defect_factor: 1.0,  downtime_factor: 0.92 },
+  poka_andon_bundle: { cost: 10000, holding_factor: 0.97, defect_factor: 0.75, downtime_factor: 0.92 },
+  lean_flow:         { cost: 12000, holding_factor: 0.75, defect_factor: 0.90, downtime_factor: 0.95 },
+} as const;
+
+// ── v3 Layout combinations ──
+type LayoutKey = "functional" | "product";
+type FlowKey   = "cellular"   | "batch";
+
+const LAYOUT_EFFECTS: Record<string, { changeover_factor: number }> = {
+  "functional:cellular": { changeover_factor: 0.80 },
+  "functional:batch":    { changeover_factor: 1.00 },
+  "product:cellular":    { changeover_factor: 0.90 },
+  "product:batch":       { changeover_factor: 1.10 },
+};
+
+const BASE_SCRAP_RATE_A = 0.045;
+const BASE_SCRAP_RATE_B = 0.055;
+
 // ============================================================
 // TYPES
 // ============================================================
 
 export interface M2Decisions {
-  sopPlanA: number[];   // 8 weekly production targets for SKU A
-  sopPlanB: number[];   // 8 weekly production targets for SKU B
+  sopPlanA: number[];
+  sopPlanB: number[];
   capacityMode: "standard" | "overtime" | "two_shift";
   lotSize: "small" | "medium" | "large";
   priorityRule: "balanced" | "priority_a" | "priority_b";
   safetyStock: "3_dos" | "6_dos" | "9_dos";
   justification: string;
+  // v3 new fields
+  bottleneckTarget?: string;
+  trainingChoice?: string;
+  layoutChoice?: string;
+  flowChoice?: string;
+  leanChoice?: string;
 }
 
 export interface M1Context {
-  avgReliabilityPct: number;   // e.g. 96.5
-  avgLeadTimeDays: number;     // e.g. 5.6
-  forecastA: number;           // e.g. 18500
-  forecastB: number;           // e.g. 9200
+  avgReliabilityPct: number;
+  avgLeadTimeDays: number;
+  forecastA: number;
+  forecastB: number;
 }
 
 export interface M2SimulationResult {
@@ -96,9 +152,15 @@ export interface M2SimulationResult {
   scoreBreakdown: {
     performance: number;
     sopQuality: number;
-    mrpLogic: number;
+    bottleneckScore: number;
+    leanQualityScore: number;
     justification: number;
-    validity: number;
+    bottleneckDetail?: {
+      true_bottleneck: string;
+      true_bottleneck_util: number;
+      wc_utilizations: Record<string, number>;
+      student_target: string | null;
+    };
   };
   kpis: {
     serviceLevel: number;
@@ -116,6 +178,15 @@ export interface M2SimulationResult {
     endingInventoryA: number;
     endingInventoryB: number;
     weeklyCapacity: number;
+    // v3 new KPIs
+    scrapReworkCost: number;
+    trainingCost: number;
+    leanCost: number;
+    capacityImprovementCost: number;
+    totalInvestmentCost: number;
+    costRatio: number;
+    costVsTargetPct: number;
+    trueBottleneck: string;
   };
   validationFlags: string[];
   feedback: string[];
@@ -132,11 +203,11 @@ export function runModule2Simulation(
   runNumber: number,
   seedOffsetBase: number = 1000,
 ): M2SimulationResult {
-  // ── Deterministic seed (same pattern as M1 engine) ──
+  // ── Deterministic seed ──
   const seed = ((stableHash(String(userId)) + seedOffsetBase + 200 + runNumber) >>> 0);
   const rand = mulberry32(seed);
 
-  // ── Extract decisions (with safe fallbacks) ──
+  // ── Extract core decisions ──
   const sopPlanA = decisions.sopPlanA.map((v) => Math.max(0, Math.floor(v || 0)));
   const sopPlanB = decisions.sopPlanB.map((v) => Math.max(0, Math.floor(v || 0)));
 
@@ -144,12 +215,29 @@ export function runModule2Simulation(
   const lotSizeKey   = LOT_SIZING[decisions.lotSize]           ? decisions.lotSize       : "medium";
   const priorityRule = ["balanced","priority_a","priority_b"].includes(decisions.priorityRule)
     ? decisions.priorityRule : "balanced";
-  const ssKey        = SAFETY_STOCK_DOS[decisions.safetyStock] !== undefined
+  const ssKey = SAFETY_STOCK_DOS[decisions.safetyStock] !== undefined
     ? decisions.safetyStock : "6_dos";
-
   const justification = decisions.justification || "";
 
-  // ── M1 context (with safe defaults) ──
+  // ── Extract v3 decisions ──
+  const rawBottleneckTarget = decisions.bottleneckTarget ?? "none";
+  const bottleneckTarget = rawBottleneckTarget in CAPACITY_IMPROVEMENTS ? rawBottleneckTarget : "none";
+
+  const rawTrainingChoice = decisions.trainingChoice ?? "none";
+  const trainingChoice = rawTrainingChoice in TRAINING_OPTIONS ? rawTrainingChoice : "none";
+
+  const rawLayoutChoice = decisions.layoutChoice ?? "functional";
+  const layoutChoice: LayoutKey = (rawLayoutChoice === "product" || rawLayoutChoice === "functional")
+    ? rawLayoutChoice as LayoutKey : "functional";
+
+  const rawFlowChoice = decisions.flowChoice ?? "cellular";
+  const flowChoice: FlowKey = (rawFlowChoice === "batch" || rawFlowChoice === "cellular")
+    ? rawFlowChoice as FlowKey : "cellular";
+
+  const rawLeanChoice = decisions.leanChoice ?? "none";
+  const leanChoice = rawLeanChoice in LEAN_OPTIONS ? rawLeanChoice : "none";
+
+  // ── M1 context ──
   const reliabilityRate = Math.max(0.5, Math.min(1.0, (m1Context.avgReliabilityPct ?? 95) / 100));
   const forecastA       = Math.max(5000, m1Context.forecastA  ?? 17800);
   const forecastB       = Math.max(2000, m1Context.forecastB  ?? 9000);
@@ -158,6 +246,28 @@ export function runModule2Simulation(
   const { dailyCapacity, dailyCost }   = CAPACITY_MODES[capacityMode];
   const { changeoversPer, lossRate }   = LOT_SIZING[lotSizeKey];
   const safetyStockDos                 = SAFETY_STOCK_DOS[ssKey];
+
+  // ── v3: Apply improvement effects ──
+  const improveCfg  = CAPACITY_IMPROVEMENTS[bottleneckTarget as keyof typeof CAPACITY_IMPROVEMENTS];
+  const trainingCfg = TRAINING_OPTIONS[trainingChoice as keyof typeof TRAINING_OPTIONS];
+  const leanCfg     = LEAN_OPTIONS[leanChoice as keyof typeof LEAN_OPTIONS];
+  const layoutKey   = `${layoutChoice}:${flowChoice}`;
+  const layoutEffect = LAYOUT_EFFECTS[layoutKey] ?? { changeover_factor: 1.0 };
+
+  const capacityImprovementCost = improveCfg.cost;
+  const trainingCost             = trainingCfg.cost;
+  const leanCost                 = leanCfg.cost;
+
+  const effectiveScrapRateA = BASE_SCRAP_RATE_A * (1 - trainingCfg.scrap_reduction);
+  const effectiveScrapRateB = BASE_SCRAP_RATE_B * (1 - trainingCfg.scrap_reduction);
+
+  const adjustedLossRate = Math.max(0.005, lossRate * (1 - trainingCfg.scrap_reduction * 0.5));
+  const adjustedChangeoverCost = CHANGEOVER_COST * layoutEffect.changeover_factor;
+  const leanHoldingFactor      = leanCfg.holding_factor;
+  const leanDowntimeFactor     = leanCfg.downtime_factor;
+
+  // On disruption days: 0.5 baseline + lean recovery
+  const effectiveDisruptionFactor = 0.5 + (1 - leanDowntimeFactor) * 0.5;
 
   // ── Convert S&OP weekly plan to daily targets ──
   const dailyTargetsA: number[] = [];
@@ -169,7 +279,7 @@ export function runModule2Simulation(
     }
   }
 
-  // ── Generate stochastic demand (deterministic PRNG) ──
+  // ── Generate stochastic demand ──
   const baselineA = forecastA / 30;
   const baselineB = forecastB / 30;
 
@@ -201,10 +311,10 @@ export function runModule2Simulation(
     let plannedA = Math.floor(dailyTargetsA[day]);
     let plannedB = Math.floor(dailyTargetsB[day]);
 
-    // Material disruption from M1 supplier reliability
+    // Material disruption from M1 supplier reliability (v3: lean improves recovery)
     if (rand() > reliabilityRate) {
-      plannedA = Math.floor(plannedA * 0.5);
-      plannedB = Math.floor(plannedB * 0.5);
+      plannedA = Math.floor(plannedA * effectiveDisruptionFactor);
+      plannedB = Math.floor(plannedB * effectiveDisruptionFactor);
     }
 
     // Capacity constraint
@@ -228,9 +338,9 @@ export function runModule2Simulation(
       actualB = plannedB;
     }
 
-    // Lot sizing loss
-    actualA = Math.floor(actualA * (1 - lossRate));
-    actualB = Math.floor(actualB * (1 - lossRate));
+    // v3: Adjusted yield loss (training reduces scrap component)
+    actualA = Math.floor(actualA * (1 - adjustedLossRate));
+    actualB = Math.floor(actualB * (1 - adjustedLossRate));
 
     totalProductionA += actualA;
     totalProductionB += actualB;
@@ -257,12 +367,14 @@ export function runModule2Simulation(
       inventoryB = 0;
     }
 
-    totalHoldingCost  += (inventoryA + inventoryB) * HOLDING_COST_PER_UNIT;
+    // v3: Lean reduces holding cost via lean_holding_factor
+    totalHoldingCost  += (inventoryA + inventoryB) * HOLDING_COST_PER_UNIT * leanHoldingFactor;
     totalCapacityCost += dailyCost;
   }
 
   // ── Post-simulation cost calculations ──
-  const totalChangeoverCost = changeoversPer * 8 * CHANGEOVER_COST;
+  // v3: Use adjusted changeover cost (layout effect)
+  const totalChangeoverCost = changeoversPer * 8 * adjustedChangeoverCost;
   const totalStockoutCost   = (totalStockoutsA + totalStockoutsB) * STOCKOUT_PENALTY;
 
   const endingInventory = inventoryA + inventoryB;
@@ -270,79 +382,151 @@ export function runModule2Simulation(
   const excessInventory = Math.max(0, endingInventory - targetEnding);
   const markdownCost    = excessInventory * MARKDOWN_COST;
 
-  const totalCost = totalCapacityCost + totalHoldingCost + totalChangeoverCost + totalStockoutCost + markdownCost;
+  // v3: scrap/rework cost estimate
+  const scrapReworkCost = (
+    (totalProductionA * effectiveScrapRateA + totalProductionB * effectiveScrapRateB) * 8.50
+  );
 
-  const totalDemand     = totalDemandA + totalDemandB;
-  const totalStockouts  = totalStockoutsA + totalStockoutsB;
-  const serviceLevel    = totalDemand > 0 ? ((totalDemand - totalStockouts) / totalDemand) * 100 : 0;
+  // v3: total cost includes investment costs
+  const totalCost = (
+    totalCapacityCost + totalHoldingCost + totalChangeoverCost +
+    totalStockoutCost + markdownCost +
+    capacityImprovementCost + trainingCost + leanCost
+  );
+
+  const totalDemand    = totalDemandA + totalDemandB;
+  const totalStockouts = totalStockoutsA + totalStockoutsB;
+  const serviceLevel   = totalDemand > 0 ? ((totalDemand - totalStockouts) / totalDemand) * 100 : 0;
 
   const totalProduction = totalProductionA + totalProductionB;
   const totalCap        = dailyCapacity * SIMULATION_DAYS;
   const capacityUtil    = totalCap > 0 ? (totalProduction / totalCap) * 100 : 0;
 
-  // ── Grading — 55 points ──
+  const targetCost = TARGET_COSTS[capacityMode];
+  const costRatio  = targetCost > 0 ? totalCost / targetCost : 1;
 
-  // Performance: Service (15) + Cost (15) = 30
+  // ── Grading — v3 rubric (20/10/10/10/5 = 55) ──
+
+  // Category 1: Performance (20 pts = Service 10 + Cost 10)
   let servicePoints: number;
-  if      (serviceLevel >= 98) servicePoints = 15;
-  else if (serviceLevel >= 95) servicePoints = 13;
-  else if (serviceLevel >= 92) servicePoints = 11;
-  else                          servicePoints = 8;
+  if      (serviceLevel >= 98) servicePoints = 10;
+  else if (serviceLevel >= 95) servicePoints = 8;
+  else if (serviceLevel >= 92) servicePoints = 7;
+  else                          servicePoints = 5;
 
-  const targetCost  = TARGET_COSTS[capacityMode];
-  const costRatio   = targetCost > 0 ? totalCost / targetCost : 1;
   let costPoints: number;
-  if      (costRatio <= 1.05) costPoints = 15;
-  else if (costRatio <= 1.10) costPoints = 13;
-  else if (costRatio <= 1.15) costPoints = 11;
-  else                         costPoints = 8;
+  if      (costRatio <= 1.05) costPoints = 10;
+  else if (costRatio <= 1.10) costPoints = 8;
+  else if (costRatio <= 1.15) costPoints = 7;
+  else                         costPoints = 5;
 
   const performanceScore = servicePoints + costPoints;
 
-  // S&OP Quality (10): compare total plan vs expected baseline demand [CRITICAL-3 fix]
-  const totalSopPlanned  = sopPlanA.reduce((s, x) => s + x, 0) + sopPlanB.reduce((s, x) => s + x, 0);
-  const expectedDemand   = (baselineA + baselineB) * SIMULATION_DAYS;
-  const sopRatio         = expectedDemand > 0 ? totalSopPlanned / expectedDemand : 0;
+  // Category 2: S&OP Quality (10 pts)
+  const totalSopPlanned = sopPlanA.reduce((s, x) => s + x, 0) + sopPlanB.reduce((s, x) => s + x, 0);
+  const expectedDemand  = (baselineA + baselineB) * SIMULATION_DAYS;
+  const sopRatio        = expectedDemand > 0 ? totalSopPlanned / expectedDemand : 0;
   let sopScore: number;
   if      (sopRatio >= 0.95 && sopRatio <= 1.05) sopScore = 10;
   else if (sopRatio >= 0.90 && sopRatio <= 1.10) sopScore = 8;
   else                                            sopScore = 6;
 
-  // MRP Logic (8): capacity utilization sweet spot
-  let mrpScore: number;
-  if      (capacityUtil >= 80 && capacityUtil <= 95)  mrpScore = 8;
-  else if ((capacityUtil >= 70 && capacityUtil < 80) || (capacityUtil > 95 && capacityUtil <= 100)) mrpScore = 6;
-  else                                                  mrpScore = 4;
+  // Category 3: Bottleneck & Capacity Decision (10 pts)
+  // Compute work-center utilization from S&OP plan
+  const wcUtil: Record<string, number> = {};
+  for (const [wcName, wc] of Object.entries(WORK_CENTERS)) {
+    let totalRequiredMin = 0;
+    for (let i = 0; i < 8; i++) {
+      totalRequiredMin += (sopPlanA[i] * wc.sam_a + sopPlanB[i] * wc.sam_b);
+    }
+    const totalAvailableMin = wc.capacity_min_day * 7 * 8;
+    wcUtil[wcName] = totalAvailableMin > 0 ? totalRequiredMin / totalAvailableMin : 0;
+  }
 
-  // Justification (5)
+  const trueBottleneck = Object.entries(wcUtil).reduce(
+    (best, [k, v]) => (v > wcUtil[best] ? k : best),
+    Object.keys(wcUtil)[0]
+  );
+  const maxUtil = wcUtil[trueBottleneck];
+
+  const studentTargetWc = improveCfg.work_center as string | null;
+
+  let bottleneckScore: number;
+  if (studentTargetWc === null) {
+    if      (maxUtil <= 0.90) bottleneckScore = 10;
+    else if (maxUtil <= 1.00) bottleneckScore = 6;
+    else                       bottleneckScore = 2;
+  } else {
+    const targetUtil = wcUtil[studentTargetWc] ?? 0;
+    if (studentTargetWc === trueBottleneck) {
+      if (improveCfg.multiplier >= 1.45 && (maxUtil * 0.80) <= 1.0) {
+        bottleneckScore = 7;
+      } else {
+        bottleneckScore = 10;
+      }
+    } else if (Math.abs(targetUtil - maxUtil) / Math.max(maxUtil, 0.01) <= 0.10) {
+      bottleneckScore = 6;
+    } else {
+      bottleneckScore = 3;
+    }
+  }
+
+  const bottleneckDetail = {
+    true_bottleneck: trueBottleneck,
+    true_bottleneck_util: Math.round(maxUtil * 100 * 10) / 10,
+    wc_utilizations: Object.fromEntries(
+      Object.entries(wcUtil).map(([k, v]) => [k, Math.round(v * 100 * 10) / 10])
+    ),
+    student_target: studentTargetWc,
+  };
+
+  // Category 4: Lean / Quality / Layout (10 pts)
+  const layoutPts = layoutChoice === "functional" ? 2 : 0;
+  const flowPts   = flowChoice   === "cellular"   ? 2 : 0;
+
+  let trainingPts: number;
+  if (trainingChoice !== "none") {
+    trainingPts = 3;
+  } else {
+    trainingPts = serviceLevel >= 95 ? 1 : 0;
+  }
+
+  const leanPtsMap: Record<string, number> = {
+    none: 0, "5s": 1,
+    poka_yoke: 3, andon: 2,
+    poka_andon_bundle: 3, lean_flow: 3,
+  };
+  const leanPts = leanPtsMap[leanChoice] ?? 0;
+
+  const leanQualityScore = Math.min(10, layoutPts + flowPts + trainingPts + leanPts);
+
+  // Category 5: Justification (5 pts)
   let justScore: number;
   if      (justification.length >= 500) justScore = 5;
   else if (justification.length >= 300) justScore = 4;
   else                                   justScore = 2;
 
-  // Validity (2)
+  // Validity flags (informational only — not scored in v3)
   const weeklyCapacity = dailyCapacity * 7;
   const validationFlags: string[] = [];
-  let validityScore = 2;
   for (let w = 0; w < 8; w++) {
     const wTotal = sopPlanA[w] + sopPlanB[w];
     if (wTotal > weeklyCapacity * 1.3) {
       validationFlags.push(`Week ${w + 1}: Planned ${wTotal.toLocaleString()} units exceeds capacity by >30%`);
-      validityScore -= 0.5;
     }
   }
-  validityScore = Math.max(0, validityScore);
 
   const scoreBreakdown = {
-    performance:  performanceScore,
-    sopQuality:   sopScore,
-    mrpLogic:     mrpScore,
-    justification: justScore,
-    validity:     validityScore,
+    performance:      performanceScore,
+    sopQuality:       sopScore,
+    bottleneckScore,
+    leanQualityScore,
+    justification:    justScore,
+    bottleneckDetail,
   };
 
   const totalScore = Math.round(
-    performanceScore + sopScore + mrpScore + justScore + validityScore
+    performanceScore + sopScore + bottleneckScore + leanQualityScore + justScore
   );
 
   let letterGrade: string;
@@ -357,7 +541,7 @@ export function runModule2Simulation(
     feedback.push(`Service level ${serviceLevel.toFixed(1)}% is below 95%. Increase safety stock or switch to a higher capacity mode.`);
   }
   if (costRatio > 1.15) {
-    feedback.push(`Total cost is ${((costRatio - 1) * 100).toFixed(1)}% above target. Review your capacity mode — Standard mode reduces base cost.`);
+    feedback.push(`Total cost is ${((costRatio - 1) * 100).toFixed(1)}% above target. Review your capacity mode and investment decisions.`);
   }
   if (capacityUtil > 98) {
     feedback.push(`Capacity utilization ${capacityUtil.toFixed(1)}% is near maximum — high stockout risk. Reduce weekly production targets or switch to Overtime/Two-Shift mode.`);
@@ -371,6 +555,9 @@ export function runModule2Simulation(
   if (totalStockoutsA + totalStockoutsB > 0 && feedback.length < 4) {
     feedback.push(`Stockouts: ${(totalStockoutsA + totalStockoutsB).toLocaleString()} units lost. Increase safety stock buffer or capacity to eliminate them.`);
   }
+  if (bottleneckScore <= 3 && feedback.length < 5) {
+    feedback.push(`Bottleneck decision: your identified bottleneck (${studentTargetWc ?? "none"}) does not match the true bottleneck (${trueBottleneck} at ${bottleneckDetail.true_bottleneck_util}% utilization).`);
+  }
 
   return {
     score: totalScore,
@@ -378,21 +565,30 @@ export function runModule2Simulation(
     letterGrade,
     scoreBreakdown,
     kpis: {
-      serviceLevel:       Math.round(serviceLevel * 10) / 10,
-      totalCost:          Math.round(totalCost),
-      capacityCost:       Math.round(totalCapacityCost),
-      holdingCost:        Math.round(totalHoldingCost),
-      changeoverCost:     Math.round(totalChangeoverCost),
-      stockoutCost:       Math.round(totalStockoutCost),
-      markdownCost:       Math.round(markdownCost),
-      capacityUtilization: Math.round(capacityUtil * 10) / 10,
+      serviceLevel:           Math.round(serviceLevel * 10) / 10,
+      totalCost:              Math.round(totalCost),
+      capacityCost:           Math.round(totalCapacityCost),
+      holdingCost:            Math.round(totalHoldingCost),
+      changeoverCost:         Math.round(totalChangeoverCost),
+      stockoutCost:           Math.round(totalStockoutCost),
+      markdownCost:           Math.round(markdownCost),
+      capacityUtilization:    Math.round(capacityUtil * 10) / 10,
       totalProductionA,
       totalProductionB,
       totalStockoutsA,
       totalStockoutsB,
-      endingInventoryA:   inventoryA,
-      endingInventoryB:   inventoryB,
+      endingInventoryA:       inventoryA,
+      endingInventoryB:       inventoryB,
       weeklyCapacity,
+      // v3 new KPIs
+      scrapReworkCost:         Math.round(scrapReworkCost),
+      trainingCost:            Math.round(trainingCost),
+      leanCost:                Math.round(leanCost),
+      capacityImprovementCost: Math.round(capacityImprovementCost),
+      totalInvestmentCost:     Math.round(trainingCost + leanCost + capacityImprovementCost),
+      costRatio:               Math.round(costRatio * 1000) / 1000,
+      costVsTargetPct:         Math.round((costRatio - 1) * 100 * 10) / 10,
+      trueBottleneck,
     },
     validationFlags,
     feedback,
