@@ -275,3 +275,15 @@ export const RemoveExtensionParams = zod.object({
 export const RemoveExtensionResponse = zod.object({
   message: zod.string(),
 });
+
+/**
+ * @summary Reset a student's final submission for a module
+ */
+export const ResetStudentSubmissionParams = zod.object({
+  userId: zod.coerce.number(),
+  moduleKey: zod.enum(["M1", "M2", "M3"]),
+});
+
+export const ResetStudentSubmissionResponse = zod.object({
+  message: zod.string(),
+});
