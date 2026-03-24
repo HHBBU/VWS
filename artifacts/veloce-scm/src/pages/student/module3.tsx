@@ -197,7 +197,6 @@ export default function Module3Page() {
   const [serviceLevel, setServiceLevel] = useState("0.95");
   const [rop, setRop] = useState(4500);
   const [q, setQ] = useState(9000);
-  const [forecastMethod, setForecastMethod] = useState("moving_average");
   const [justification, setJustification] = useState("");
 
   // Submission state
@@ -264,7 +263,6 @@ export default function Module3Page() {
             serviceLevel: parseFloat(serviceLevel),
             rop,
             q,
-            forecastMethod,
             justification,
           }),
         });
@@ -292,7 +290,7 @@ export default function Module3Page() {
         setIsRunning(false);
       }
     },
-    [networkStrategy, serviceMode, serviceLevel, rop, q, forecastMethod, justification, toast, queryClient],
+    [networkStrategy, serviceMode, serviceLevel, rop, q, justification, toast, queryClient],
   );
 
   const isSubmitted = moduleData?.isSubmitted ?? false;
@@ -606,38 +604,12 @@ export default function Module3Page() {
             </CardContent>
           </Card>
 
-          {/* Section 3: Forecast Method */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="h-5 w-5 text-amber-600" />
-                3. Demand Forecasting Method
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={forecastMethod} onValueChange={setForecastMethod}>
-                <SelectTrigger className="max-w-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="moving_average">Moving Average (3-month)</SelectItem>
-                  <SelectItem value="exponential_smoothing">Exponential Smoothing (α=0.3)</SelectItem>
-                  <SelectItem value="seasonal">Seasonal Decomposition</SelectItem>
-                  <SelectItem value="naive">Naïve (last period = next period)</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500 mt-2">
-                Demand forecasting method influences how you set ROP and Q — justify your choice below.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Section 4: Justification */}
+          {/* Section 3: Justification */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Info className="h-5 w-5 text-gray-600" />
-                4. Strategic Justification
+                3. Strategic Justification
               </CardTitle>
               <CardDescription>
                 Explain your network strategy choice, ROP/Q calculations (EOQ/SS/ROP formulas), service mode
@@ -647,7 +619,7 @@ export default function Module3Page() {
             <CardContent>
               <Textarea
                 rows={8}
-                placeholder="Discuss: Which network strategy did you choose and why? How did you calculate EOQ, Safety Stock, and ROP for each SKU? What service level did you target and why? What are the cost vs. carbon trade-offs of your service mode? How did M1 supplier reliability and M2 service level affect your M3 decisions?..."
+                placeholder="Discuss: Which network strategy did you choose and why? How did you calculate EOQ, Safety Stock, and ROP for each SKU? What service level did you target and why? What are the cost vs. carbon trade-offs of your service mode? How did M1 supplier reliability and M2 service level affect your M3 decisions? Which demand forecasting method did you apply (e.g., Moving Average, Exponential Smoothing, Seasonal Decomposition) and why?"
                 value={justification}
                 onChange={(e) => setJustification(e.target.value)}
                 className="resize-none"
