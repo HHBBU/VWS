@@ -442,6 +442,8 @@ export default function Module1Page() {
   }
 
   const isSubmitted = moduleData?.isSubmitted;
+  const practiceCount = moduleData?.practiceCount ?? 0;
+  const practiceAtLimit = practiceCount >= 4;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -935,15 +937,24 @@ export default function Module1Page() {
               {/* ── Submit Actions ── */}
               {!isSubmitted ? (
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Button
-                    size="lg" variant="outline"
-                    className="flex-1 h-12 border-primary/30"
-                    onClick={runPractice}
-                    disabled={isPracticing || isSubmitting}
-                  >
-                    {isPracticing ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <TrendingUp className="w-5 h-5 mr-2 text-primary" />}
-                    Run Practice Simulation
-                  </Button>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Practice Runs</span>
+                      <span className={`font-semibold ${practiceAtLimit ? "text-destructive" : "text-foreground"}`}>
+                        {practiceCount} / 4 used
+                      </span>
+                    </div>
+                    <Button
+                      size="lg" variant="outline"
+                      className={`w-full h-12 border-primary/30 ${practiceAtLimit ? "opacity-50 cursor-not-allowed" : ""}`}
+                      onClick={runPractice}
+                      disabled={isPracticing || isSubmitting || practiceAtLimit}
+                      title={practiceAtLimit ? "Practice run limit reached — submit your final decision" : undefined}
+                    >
+                      {isPracticing ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <TrendingUp className="w-5 h-5 mr-2 text-primary" />}
+                      {practiceAtLimit ? "Limit Reached" : "Run Practice Simulation"}
+                    </Button>
+                  </div>
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>

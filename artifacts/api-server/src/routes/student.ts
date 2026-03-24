@@ -385,6 +385,21 @@ router.post("/modules/:moduleKey/practice", requireStudent, async (req: Request,
     return res.status(400).json(ErrorResponseSchema.parse({ error: "Module already submitted" }));
   }
 
+  const [practiceCountRow] = await db
+    .select({ count: count() })
+    .from(simulationRunsTable)
+    .where(
+      and(
+        eq(simulationRunsTable.userId, userId),
+        eq(simulationRunsTable.moduleKey, key),
+        eq(simulationRunsTable.isFinal, false),
+      ),
+    );
+  const practiceRunCount = practiceCountRow?.count ?? 0;
+  if (practiceRunCount >= 4) {
+    return res.status(400).json(ErrorResponseSchema.parse({ error: "Practice run limit reached — you may run up to 4 practice simulations before submitting final." }));
+  }
+
   const runNumber = await getNextRunNumber(userId, key);
 
   let practiceScore: number;

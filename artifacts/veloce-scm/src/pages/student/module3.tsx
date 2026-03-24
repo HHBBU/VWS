@@ -296,6 +296,8 @@ export default function Module3Page() {
   );
 
   const isSubmitted = moduleData?.isSubmitted ?? false;
+  const practiceCount = moduleData?.practiceCount ?? 0;
+  const practiceAtLimit = practiceCount >= 4;
 
   if (moduleLoading || contextLoading) {
     return (
@@ -676,17 +678,28 @@ export default function Module3Page() {
 
           {/* ── Action Buttons ── */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
-              onClick={() => handleSubmit("practice")}
-              disabled={isRunning}
-            >
-              {isRunning && runType === "practice" ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Running 90-Day Simulation…</>
-              ) : (
-                <><TrendingUp className="h-4 w-4 mr-2" /> Run Practice Simulation</>
-              )}
-            </Button>
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Practice Runs</span>
+                <span className={`font-semibold ${practiceAtLimit ? "text-red-600" : "text-gray-700"}`}>
+                  {practiceCount} / 4 used
+                </span>
+              </div>
+              <Button
+                className={`w-full bg-blue-600 hover:bg-blue-700 ${practiceAtLimit ? "opacity-50 cursor-not-allowed" : ""}`}
+                onClick={() => handleSubmit("practice")}
+                disabled={isRunning || practiceAtLimit}
+                title={practiceAtLimit ? "Practice run limit reached — submit your final decision" : undefined}
+              >
+                {isRunning && runType === "practice" ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Running 90-Day Simulation…</>
+                ) : practiceAtLimit ? (
+                  <>Limit Reached</>
+                ) : (
+                  <><TrendingUp className="h-4 w-4 mr-2" /> Run Practice Simulation</>
+                )}
+              </Button>
+            </div>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
