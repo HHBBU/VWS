@@ -43,16 +43,23 @@ app.use(
 );
 
 app.use("/api", router);
+// Serve frontend static files
+const frontendDist = path.resolve(process.cwd(), "..", "veloce-scm", "dist", "public");
 
-if (process.env.NODE_ENV === "production") {
-  const frontendDist = path.resolve(process.cwd(), "artifacts/veloce-scm/dist/public");
-  if (existsSync(frontendDist)) {
-    app.use(express.static(frontendDist));
-    app.use((_req, res) => {
-      res.sendFile(path.join(frontendDist, "index.html"));
-    });
+// This tells the server to serve the dashboard even if it's not sure about the path
+app.use(express.static(frontendDist));
+
+// This ensures that if a student refreshes a page, it doesn't crash
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) {
+    return next();
   }
-}
+  res.sendFile(path.join(frontendDist, "index.html"), (err) => {
+    if (err) {
+      res.status(404).send("VeloceWear Dashboard files not found. Please check build logs.");
+    }
+  });
+});
 
 seedData().catch((err) => {
   console.error("Seed error:", err);
