@@ -43,17 +43,24 @@ app.use(
 );
 
 app.use("/api", router);
-// Serve frontend static files
-const frontendDist = path.resolve(process.cwd(), "..", "veloce-scm", "dist", "public");
+if (process.env.NODE_ENV === "production") {
+  const frontendDist = path.resolve(process.cwd(), "..", "veloce-scm", "dist", "public");
+  
+  // Serve the static files (css, js, images)
+  app.use(express.static(frontendDist));
 
-// This tells the server to serve the dashboard even if it's not sure about the path
-app.use(express.static(frontendDist));
-
-// This ensures that if a student refreshes a page, it doesn't crash
-app.get("/:path*", (req, res, next) => {
-  if (req.path.startsWith("/api")) {
-    return next();
-  }
+  // Catch-all: If the request isn't for an API, send the dashboard
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      return next();
+    }
+    res.sendFile(path.join(frontendDist, "index.html"), (err) => {
+      if (err) {
+        res.status(404).send("Dashboard files not found at: " + frontendDist);
+      }
+    });
+  });
+}
   res.sendFile(path.join(frontendDist, "index.html"), (err) => {
     if (err) {
       res.status(404).send("VeloceWear Dashboard files not found. Please check build logs.");
