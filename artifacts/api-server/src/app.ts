@@ -43,19 +43,16 @@ app.use(
 );
 
 app.use("/api", router);
+
 if (process.env.NODE_ENV === "production") {
   const frontendDist = path.resolve(process.cwd(), "..", "veloce-scm", "dist", "public");
   
-  // Serve static files
   app.use(express.static(frontendDist));
 
-  // Catch-all middleware: No regex, no asterisks, no PathErrors
   app.use((req, res, next) => {
-    // If it's an API call, let it through to the router
     if (req.path.startsWith("/api")) {
       return next();
     }
-    // Otherwise, send the dashboard
     res.sendFile(path.join(frontendDist, "index.html"), (err) => {
       if (err) {
         res.status(404).send("VeloceWear Dashboard files not found.");
@@ -63,12 +60,6 @@ if (process.env.NODE_ENV === "production") {
     });
   });
 }
-  res.sendFile(path.join(frontendDist, "index.html"), (err) => {
-    if (err) {
-      res.status(404).send("VeloceWear Dashboard files not found. Please check build logs.");
-    }
-  });
-});
 
 seedData().catch((err) => {
   console.error("Seed error:", err);
