@@ -50,7 +50,7 @@ const frontendDist = path.resolve(process.cwd(), "..", "veloce-scm", "dist", "pu
 app.use(express.static(frontendDist));
 
 // This ensures that if a student refreshes a page, it doesn't crash
-app.get("(.*)", (req, res, next) => {
+app.get("/:path*", (req, res, next) => {
   if (req.path.startsWith("/api")) {
     return next();
   }
