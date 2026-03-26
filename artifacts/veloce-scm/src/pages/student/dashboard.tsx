@@ -41,6 +41,21 @@ export default function StudentDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-6xl">
+      {/* Dashboard hero banner */}
+      <div className="relative rounded-2xl overflow-hidden mb-10 h-44 md:h-56 shadow-lg">
+        <img
+          src={`${import.meta.env.BASE_URL}img/banner-dashboard.png`}
+          alt="Veloce Wear supply chain dashboard"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+        <div className="relative z-10 h-full flex flex-col justify-center px-8">
+          <p className="text-xs font-semibold uppercase tracking-widest text-white/60 mb-1">SCM 4330 · Veloce Wear</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">Supply Chain Simulation</h2>
+          <p className="text-white/70 text-sm max-w-sm">Global Sourcing · Manufacturing · Distribution</p>
+        </div>
+      </div>
+
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}

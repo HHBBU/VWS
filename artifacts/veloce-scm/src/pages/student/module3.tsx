@@ -307,6 +307,21 @@ export default function Module3Page() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      {/* Module 3 banner */}
+      <div className="relative rounded-2xl overflow-hidden mb-2 h-40 md:h-52 shadow-md">
+        <img
+          src={`${import.meta.env.BASE_URL}img/banner-module3.png`}
+          alt="Distribution network and inventory management"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/35 to-transparent" />
+        <div className="relative z-10 h-full flex flex-col justify-center px-8">
+          <p className="text-xs font-semibold uppercase tracking-widest text-white/60 mb-1">Module 3</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">Distribution Network</h2>
+          <p className="text-white/70 text-sm">Network design, inventory policy &amp; global fulfillment strategy</p>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/dashboard">
