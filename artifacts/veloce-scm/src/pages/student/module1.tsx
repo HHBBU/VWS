@@ -453,6 +453,21 @@ export default function Module1Page() {
         </Button>
       </Link>
 
+      {/* Module 1 banner */}
+      <div className="relative rounded-2xl overflow-hidden mb-8 h-40 md:h-52 shadow-md">
+        <img
+          src={`${import.meta.env.BASE_URL}img/banner-module1.png`}
+          alt="Global supplier network and fabric sourcing"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/35 to-transparent" />
+        <div className="relative z-10 h-full flex flex-col justify-center px-8">
+          <p className="text-xs font-semibold uppercase tracking-widest text-white/60 mb-1">Module 1</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">Global Sourcing</h2>
+          <p className="text-white/70 text-sm">Select suppliers, modes of transport &amp; order quantities for Veloce Wear</p>
+        </div>
+      </div>
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 mb-8">
         <div>

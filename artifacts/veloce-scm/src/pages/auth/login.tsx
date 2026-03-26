@@ -19,7 +19,27 @@ export default function Login() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 py-20 bg-muted/20">
+    <div className="flex-1 flex min-h-full">
+      {/* Left panel — hero image (hidden on mobile) */}
+      <div className="hidden md:flex md:w-1/2 relative overflow-hidden flex-col items-center justify-end">
+        <img
+          src={`${import.meta.env.BASE_URL}img/hero-login.png`}
+          alt="Global supply chain network"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div className="relative z-10 p-10 text-white w-full">
+          <p className="text-xs font-semibold uppercase tracking-widest text-white/60 mb-2">SCM 4330 · Georgia Gwinnett College</p>
+          <h2 className="text-3xl font-bold leading-tight mb-3">Veloce Wear<br />Supply Chain Simulation</h2>
+          <p className="text-white/70 text-sm max-w-xs leading-relaxed">
+            Make real sourcing, production, and distribution decisions as a supply chain manager for a global fashion brand.
+          </p>
+        </div>
+      </div>
+
+      {/* Right panel — login form */}
+      <div className="flex-1 flex items-center justify-center p-4 py-20 bg-muted/20">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -89,6 +109,7 @@ export default function Login() {
           </CardContent>
         </Card>
       </motion.div>
+      </div>
     </div>
   );
 }
