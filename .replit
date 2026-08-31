@@ -9,7 +9,7 @@ modules = ["nodejs-24", "python-3.11", "postgresql-16"]
   [deployment]
   router = "application"
   deploymentTarget = "autoscale"
-  build = ["bash", "-c", "PORT=8080 BASE_PATH=/ pnpm run build"]
+  build = ["bash", "-c", "pnpm run typecheck"]
   run = ["node", "artifacts/api-server/dist/index.cjs"]
 
   [deployment.postBuild]
