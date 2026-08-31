@@ -26,3 +26,11 @@ The checked-in Playwright CLI can discover Module 1 specs, but its downloaded Ch
 **Why:** The managed browser testing agent completed the same preset-and-map flow successfully while the local CLI runner failed before executing a test due to missing Chromium runtime libraries.
 
 **How to apply:** Use the managed browser testing agent as the authoritative UI run unless the workspace intentionally adds and maintains the complete Chromium runtime. Do not add broad browser system dependencies solely to work around a one-off local test invocation.
+
+## Deployment build separation
+
+The deployment pre-build must not run API-dependent browser tests: publishing builds do not start the API server, so registration-based E2E setup returns gateway errors even when the app and tests work locally.
+
+**Why:** A publish attempt failed because the root deployment hook invoked the full validation build, including E2E tests that require a live API service.
+
+**How to apply:** Keep deployment hooks limited to dependency-safe checks such as typechecking, and let the artifact-specific production build create the static bundle. Run the full E2E suite separately with the development services running.
