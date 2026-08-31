@@ -4,6 +4,7 @@ import {
   moduleSettingsTable,
   simulationRunsTable,
   moduleSubmissionsTable,
+  configTable,
 } from "@workspace/db/schema";
 import { and, eq, desc, asc, count } from "drizzle-orm";
 import {
@@ -178,6 +179,7 @@ router.get("/modules/:moduleKey", requireStudent, async (req: Request, res: Resp
         letterGrade: scoreToLetterGrade(r.score),
         isFinal: r.isFinal,
         createdAt: r.createdAt.toISOString(),
+        kpi: r.kpiJson ? (() => { try { return JSON.parse(r.kpiJson!); } catch { return null; } })() : null,
       })),
       practiceCount: practiceCountRow?.count ?? 0,
       windowStart: windowInfo.windowStart,
@@ -185,6 +187,13 @@ router.get("/modules/:moduleKey", requireStudent, async (req: Request, res: Resp
       windowEnabled: windowInfo.windowEnabled,
     }),
   );
+});
+
+// GET disruption config — public, no auth required (used on module-intro page)
+router.get("/disruption-config", async (_req: Request, res: Response) => {
+  const [row] = await db.select().from(configTable).where(eq(configTable.key, "disruption_config")).limit(1);
+  const cfg = row ? JSON.parse(row.value) : { M2: "none", M3: "none" };
+  return res.json(cfg);
 });
 
 // GET historical data for M1
@@ -308,18 +317,29 @@ function extractM2Decisions(body: any): M2Decisions {
   };
   const sopPlanA = Array.from({ length: 8 }, (_, i) => safeInt(body.sopPlanA?.[i] ?? body[`w${i + 1}_a`]));
   const sopPlanB = Array.from({ length: 8 }, (_, i) => safeInt(body.sopPlanB?.[i] ?? body[`w${i + 1}_b`]));
-  const validCapacity = ["standard", "overtime", "two_shift"];
-  const validLot      = ["small", "medium", "large"];
-  const validPriority = ["balanced", "priority_a", "priority_b"];
-  const validSS       = ["3_dos", "6_dos", "9_dos"];
+  const validCapacity    = ["standard", "overtime", "two_shift"];
+  const validLot         = ["small", "medium", "large"];
+  const validPriority    = ["balanced", "priority_a", "priority_b"];
+  const validSS          = ["3_dos", "6_dos", "9_dos"];
+  const validBottleneck  = ["none","cutting_modify","cutting_buy","dyeing_modify","dyeing_buy",
+                            "sewing_modify","sewing_buy","packaging_modify","packaging_buy"];
+  const validTraining    = ["none", "green_belt", "black_belt"];
+  const validLayout      = ["functional", "product"];
+  const validFlow        = ["cellular", "batch"];
+  const validLean        = ["none", "5s", "poka_yoke", "andon", "poka_andon_bundle", "lean_flow"];
   return {
     sopPlanA,
     sopPlanB,
-    capacityMode: validCapacity.includes(body.capacityMode) ? body.capacityMode : "standard",
-    lotSize:      validLot.includes(body.lotSize)           ? body.lotSize       : "medium",
-    priorityRule: validPriority.includes(body.priorityRule) ? body.priorityRule  : "balanced",
-    safetyStock:  validSS.includes(body.safetyStock)        ? body.safetyStock   : "6_dos",
-    justification: (body.justification || "").trim(),
+    capacityMode:     validCapacity.includes(body.capacityMode)       ? body.capacityMode    : "standard",
+    lotSize:          validLot.includes(body.lotSize)                 ? body.lotSize          : "medium",
+    priorityRule:     validPriority.includes(body.priorityRule)       ? body.priorityRule     : "balanced",
+    safetyStock:      validSS.includes(body.safetyStock)              ? body.safetyStock      : "6_dos",
+    justification:    (body.justification || "").trim(),
+    bottleneckTarget: validBottleneck.includes(body.bottleneckTarget) ? body.bottleneckTarget : "none",
+    trainingChoice:   validTraining.includes(body.trainingChoice)     ? body.trainingChoice   : "none",
+    layoutChoice:     validLayout.includes(body.layoutChoice)         ? body.layoutChoice     : "functional",
+    flowChoice:       validFlow.includes(body.flowChoice)             ? body.flowChoice       : "cellular",
+    leanChoice:       validLean.includes(body.leanChoice)             ? body.leanChoice       : "none",
   };
 }
 
@@ -595,7 +615,7 @@ router.post("/modules/:moduleKey/submit", requireStudent, async (req: Request, r
       userId,
       moduleKey: key,
       score: finalScore,
-      maxScore: 55,
+      maxScore: extraResult.maxScore ?? 52,
       submittedAt: now,
       submissionJson,
     })
@@ -612,10 +632,48 @@ router.post("/modules/:moduleKey/submit", requireStudent, async (req: Request, r
     runNumber,
     score: finalScore,
     isFinal: true,
-    message: `${key} submitted successfully with score ${finalScore}/55!`,
+    message: `${key} submitted successfully with score ${finalScore}/${extraResult.maxScore ?? 52}!`,
   });
 
   return res.json({ ...baseResult, ...extraResult });
+});
+
+// GET cross-module cascade data (all 3 final submissions' KPIs for the decision cascade view)
+router.get("/cascade", requireStudent, async (req: Request, res: Response) => {
+  const userId = req.session.userId!;
+
+  const [m1Sub] = await db.select().from(moduleSubmissionsTable)
+    .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M1")))
+    .limit(1);
+  const [m2Sub] = await db.select().from(moduleSubmissionsTable)
+    .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M2")))
+    .limit(1);
+  const [m3Sub] = await db.select().from(moduleSubmissionsTable)
+    .where(and(eq(moduleSubmissionsTable.userId, userId), eq(moduleSubmissionsTable.moduleKey, "M3")))
+    .limit(1);
+
+  if (!m1Sub?.submittedAt || !m2Sub?.submittedAt || !m3Sub?.submittedAt) {
+    return res.json({ allSubmitted: false });
+  }
+
+  const parseKpis = (sub: typeof m1Sub) => {
+    try { return JSON.parse(sub!.submissionJson!).kpis ?? {}; } catch { return {}; }
+  };
+
+  return res.json({
+    allSubmitted: true,
+    modules: [
+      { moduleKey: "M1", score: m1Sub.score, kpis: parseKpis(m1Sub) },
+      { moduleKey: "M2", score: m2Sub.score, kpis: parseKpis(m2Sub) },
+      { moduleKey: "M3", score: m3Sub.score, kpis: parseKpis(m3Sub) },
+    ],
+  });
+});
+
+router.get("/image-config", async (_req: Request, res: Response) => {
+  const [row] = await db.select().from(configTable).where(eq(configTable.key, "image_config")).limit(1);
+  const overrides = row ? JSON.parse(row.value) : {};
+  return res.json(overrides);
 });
 
 export default router;

@@ -1,0 +1,102 @@
+I want to update the SCM 3000 simulation so that student justification grading is handled manually by the instructor, not automatically by the app.
+
+Please create a downloadable final report at the end of the simulation that students can submit for grading.
+
+Important grading logic change:
+
+* Remove justification grading from the automatic total score.
+* The app should NOT auto-grade written justifications.
+* The automatic score should only include the objective simulation/decision score.
+* Written justifications should be collected and displayed in the final downloadable report for instructor manual grading.
+* The report should clearly separate:
+
+  1. Auto-scored simulation performance
+  2. Student-written justifications for instructor review
+  3. Instructor manual grading area, if possible
+
+Report requirements:
+At the end of the simulation, generate a downloadable report that includes:
+
+1. Student information
+
+* Student name
+* Student ID or email if available
+* Course/section if available
+* Attempt type: Practice or Official
+* Official Attempt number if applicable
+* Completion date and time
+* Case seed or scenario ID
+
+2. Module-by-module results
+   For each module, include:
+
+* Module name
+* Student decisions
+* Key performance outcomes
+* Auto-scored points earned for that module
+* Maximum auto-scored points for that module
+* Student written justification for that module
+
+Modules should include:
+
+* Module 1: Global Sourcing
+* Module 2: Operations & Flow
+* Module 3: Distribution & Service
+* Capstone / Integrated Final Simulation, if included
+
+3. Total score summary
+   Include:
+
+* Total auto-scored points earned
+* Total possible auto-scored points
+* Percentage auto-score
+* Do NOT include justification points in this total
+* Add a note: “Written justifications are not included in the automatic score and will be graded separately by the instructor.”
+
+4. Instructor grading section
+   Add a blank grading area for the instructor, such as:
+
+* Module 1 Justification Score: ____ / ____
+* Module 2 Justification Score: ____ / ____
+* Module 3 Justification Score: ____ / ____
+* Capstone Justification Score: ____ / ____
+* Instructor comments: ______________________
+* Final instructor-adjusted grade: ____ / ____
+
+5. Downloadable format
+   The report should be downloadable at the end of the simulation.
+   Preferred format:
+
+* PDF if feasible
+* If PDF is difficult, create a clean printable HTML report with a “Download / Print Report” button
+* Also allow CSV or JSON export for instructor records if easy to implement
+
+6. Practice vs official report distinction
+   For practice attempts:
+
+* Generate a report, but watermark it clearly as “PRACTICE REPORT — NOT FOR GRADING.”
+* Practice reports should not count toward the official grade.
+
+For official attempts:
+
+* Generate an “OFFICIAL SIMULATION SCORE REPORT.”
+* This is the report students submit for grading.
+
+7. Official attempt policy to preserve
+
+* Students may have unlimited practice attempts.
+* Practice attempts do not count.
+* Students get two official attempts.
+* Official Attempt 1 and Official Attempt 2 should use the same locked student-specific case seed/scenario for fairness.
+* The higher official auto-score should count.
+* Written justifications are reviewed manually by the instructor.
+* Multiple-choice or decision-option answer choices may be shuffled between attempts when appropriate, but scoring must be tied to hidden option IDs, not visible A/B/C/D choices.
+
+Please first propose a clear implementation plan before coding. Include:
+
+* Files/routes/components that need to be changed
+* Database fields or tables that need to be added/updated
+* How the final report will be generated
+* How practice and official reports will be labeled differently
+* How justification grading will be removed from the automatic total
+* Any risks or assumptions

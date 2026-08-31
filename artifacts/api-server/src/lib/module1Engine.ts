@@ -257,6 +257,8 @@ export interface M1KPIs {
   totalCo2: number;
   cottonAllocatedKg: number;
   nylonAllocatedKg: number;
+  cottonReceivedKg: number;
+  nylonReceivedKg: number;
   cottonRequiredKg: number;
   nylonRequiredKg: number;
   lateDeliveries: number;
@@ -328,6 +330,8 @@ export function runModule1Simulation(
   let totalOrderCost = 0;
   let totalCottonAllocated = 0;
   let totalNylonAllocated = 0;
+  let totalCottonReceived = 0;
+  let totalNylonReceived = 0;
   let weightedLeadTime = 0;
   let weightedReliability = 0;
   let weightedSustainability = 0;
@@ -336,6 +340,7 @@ export function runModule1Simulation(
   let totalCo2 = 0;
   let lateDeliveries = 0;
   let totalDeliveries = 0;
+  const MAX_SHORTFALL_PCT = 0.05;
 
   for (const alloc of allocations) {
     const kgAllocated = alloc.kg || 0;
@@ -407,10 +412,37 @@ export function runModule1Simulation(
     totalCo2 += kgAllocated * transport.co2;
 
     totalDeliveries += numBatches;
+    const kgPerBatch = kgAllocated / numBatches;
+    let kgReceivedForAlloc = 0;
+    const unreliability = Math.max(0, 1 - effectiveReliability);
     for (let b = 0; b < numBatches; b++) {
-      if (rand() > effectiveReliability) {
+      const isLate = rand() > effectiveReliability;
+      if (isLate) {
         lateDeliveries++;
       }
+
+      // Quantity variance: even reliable suppliers occasionally under-ship a
+      // batch. Late batches roll a larger shortfall; on-time batches have a
+      // smaller chance of a minor shortfall. Magnitude is always capped at
+      // MAX_SHORTFALL_PCT (5%) and scales with the supplier/route's
+      // unreliability so weaker combinations shortfall more often/more.
+      let shortfallPct = 0;
+      if (isLate) {
+        shortfallPct = rand() * MAX_SHORTFALL_PCT;
+      } else {
+        const minorShortfallChance = Math.min(0.5, unreliability * 2);
+        if (rand() < minorShortfallChance) {
+          shortfallPct = rand() * MAX_SHORTFALL_PCT * 0.4;
+        }
+      }
+
+      kgReceivedForAlloc += kgPerBatch * (1 - shortfallPct);
+    }
+
+    if (alloc.materialType === "cotton") {
+      totalCottonReceived += kgReceivedForAlloc;
+    } else {
+      totalNylonReceived += kgReceivedForAlloc;
     }
   }
 
@@ -432,8 +464,8 @@ export function runModule1Simulation(
   const avgSustainability = totalKg > 0 ? weightedSustainability / totalKg : 0;
   const avgQuality = totalKg > 0 ? weightedQuality / totalKg : 0;
 
-  const cottonCoverage = reqCottonKg > 0 ? totalCottonAllocated / reqCottonKg : 0;
-  const nylonCoverage = reqNylonKg > 0 ? totalNylonAllocated / reqNylonKg : 0;
+  const cottonCoverage = reqCottonKg > 0 ? totalCottonReceived / reqCottonKg : 0;
+  const nylonCoverage = reqNylonKg > 0 ? totalNylonReceived / reqNylonKg : 0;
 
   if (cottonCoverage < 1.0) {
     validationFlags.push(
@@ -546,13 +578,7 @@ export function runModule1Simulation(
     validityPoints = Math.max(0, validityPoints - 2);
   }
 
-  let justificationPoints: number;
-  if (justification.length >= 500) justificationPoints = 3;
-  else if (justification.length >= 300) justificationPoints = 2;
-  else if (justification.length >= 150) justificationPoints = 1;
-  else justificationPoints = 0;
-
-  const validityJustificationScore = validityPoints + justificationPoints;
+  const validityJustificationScore = validityPoints;
 
   const scoreBreakdown: M1ScoreBreakdown = {
     forecasting: forecastingScore,
@@ -567,10 +593,10 @@ export function runModule1Simulation(
   );
 
   let letterGrade: string;
-  if (totalScore >= 51) letterGrade = "A";
-  else if (totalScore >= 45) letterGrade = "B";
-  else if (totalScore >= 38) letterGrade = "C";
-  else if (totalScore >= 30) letterGrade = "D";
+  if (totalScore >= 48) letterGrade = "A";
+  else if (totalScore >= 42) letterGrade = "B";
+  else if (totalScore >= 35) letterGrade = "C";
+  else if (totalScore >= 27) letterGrade = "D";
   else letterGrade = "F";
 
   // 8. FEEDBACK
@@ -622,7 +648,7 @@ export function runModule1Simulation(
 
   return {
     score: totalScore,
-    maxScore: 55,
+    maxScore: 52,
     letterGrade,
     scoreBreakdown,
     kpis: {
@@ -643,6 +669,8 @@ export function runModule1Simulation(
       totalCo2: Math.round(totalCo2 * 10) / 10,
       cottonAllocatedKg: Math.round(totalCottonAllocated * 10) / 10,
       nylonAllocatedKg: Math.round(totalNylonAllocated * 10) / 10,
+      cottonReceivedKg: Math.round(totalCottonReceived * 10) / 10,
+      nylonReceivedKg: Math.round(totalNylonReceived * 10) / 10,
       cottonRequiredKg: Math.round(reqCottonKg * 10) / 10,
       nylonRequiredKg: Math.round(reqNylonKg * 10) / 10,
       lateDeliveries,

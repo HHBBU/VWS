@@ -1,0 +1,181 @@
+# REPLIT AGENT PROMPT — SESSION 2: REMAINING FIXES
+# Veloce Wear Simulation
+# Paste this entire prompt into the Replit Agent chat
+# Run this AFTER Session 1 (4 priority fixes) is deployed and confirmed working
+
+Work through these 3 fixes ONE AT A TIME in this exact order.
+Say "Fix [N] complete" before starting the next one.
+Do NOT change any grading logic, scoring thresholds, or engine constants.
+Do NOT remove any existing features or UI elements.
+Do NOT redo anything from Session 1 — those fixes are already done.
+
+---
+
+## FIX 5 — Password Reset for Students
+
+### What to build
+
+PART A — Instructor resets a student's password from the dashboard:
+1. In the instructor dashboard student list, add a "Reset Password"
+   button next to each student name (place it next to the
+   Remove button added in Session 1)
+2. When clicked, show a small modal dialog:
+   - Title: "Reset Password — [Student Name]"
+   - One input field labeled: "New temporary password"
+   - Two buttons: "Cancel" (gray) and "Reset Password" (blue)
+3. When instructor clicks "Reset Password":
+   - Hash the new password using the same hashing method used
+     everywhere else in this app (bcrypt or equivalent)
+   - Update that student's password in the database
+   - Close the modal
+   - Show a green success toast: "Password reset for [Student Name]"
+4. The student can now log in with the new temporary password immediately
+
+PART B — Student login page improvement:
+1. On the student login page, below the login button, add this text:
+   "Forgot your password? Ask your instructor to reset it for you."
+2. Style: small, gray, italic — just plain text, no link or form needed
+3. This prevents students from being confused about what to do
+
+Tell me "Fix 5 complete" when done.
+
+---
+
+## FIX 6 — Create Second Instructor Account
+
+### What to do
+Create a second instructor account with these EXACT credentials:
+- Email:    huvet@ggc.edu
+- Password: Beyza2015
+- Role:     instructor
+- Name:     Prof. Hasan Uvet
+
+Steps:
+1. Hash the password "Beyza2015" using the same hashing method
+   used for all other passwords in this app
+2. Insert this account into the users table in the database
+   with the instructor role
+3. This account must have FULL instructor dashboard access —
+   same permissions as the existing instructor account
+4. Before inserting, check if huvet@ggc.edu already exists
+   to avoid creating a duplicate
+5. Also create a reusable seed script at:
+   scripts/seed-instructor.js (or .ts)
+   The script should:
+   - Check if the account already exists before inserting
+   - Hash the password properly
+   - Insert with instructor role
+   - Print "Instructor account created" or "Already exists" when run
+   This script can be run in the future with:
+   node scripts/seed-instructor.js
+6. Test by logging out of the current session, then logging in
+   with huvet@ggc.edu / Beyza2015
+7. Confirm the full instructor dashboard loads correctly —
+   student list, module results, all instructor features visible
+
+Tell me "Fix 6 complete" and confirm the login test worked.
+
+---
+
+## FIX 7 — Meaningful Images for Each Decision Section
+
+### What to add
+For each major decision section in Module 2, add a contextually
+relevant image at the top of the section card to help students
+visualize what they are deciding. This increases engagement and
+makes the simulation feel more realistic.
+
+Use images loaded by URL — do NOT upload image files.
+Use royalty-free images from Unsplash (https://images.unsplash.com).
+Each image: full width of card, height 180px, object-fit: cover,
+border-radius matching the card style, loading="lazy".
+Add a small italic caption below each image.
+
+Add images to these sections in this order:
+
+### Section 1 — S&OP Weekly Production Plan
+Image: factory floor overview or production planning board
+URL: https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80
+Caption: "Porto Manufacturing Campus — translating demand into weekly production targets"
+
+### Section 2 — Factory Operations Policies
+Image: workers operating industrial machinery on a factory floor
+URL: https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80
+Caption: "Capacity mode determines how many units Porto can produce each day"
+
+### Section 3 — Bottleneck & Capacity Improvement
+Image: industrial sewing machines in an apparel factory
+URL: https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80
+Caption: "The sewing floor — the most labor-intensive stage in fast-fashion production"
+
+### Section 4 — Workforce Training & Quality Improvement
+Image: team training session or workers in a meeting on the factory floor
+URL: https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80
+Caption: "Workforce training reduces scrap rates, rework, and setup losses"
+
+### Section 5 — Factory Layout & Lean Initiatives
+Image: clean, organized factory floor showing visual management or 5S
+URL: https://images.unsplash.com/photo-1567789884554-0b844b597180?w=800&q=80
+Caption: "Lean manufacturing — eliminating waste, improving flow, protecting quality"
+
+### If any image URL fails to load
+Use this reliable fallback from Unsplash instead:
+https://images.unsplash.com/photo-1565043666747-69f6646db940?w=800&q=80
+Or search Unsplash for "apparel manufacturing factory" and use any
+appropriate royalty-free result.
+
+### Additional images for Module 3 decision sections:
+
+Module 3 — Network Strategy section:
+URL: https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80
+Caption: "Global distribution network — balancing speed, cost, and service"
+
+Module 3 — Inventory Policy section:
+URL: https://images.unsplash.com/photo-1553413077-190dd305871c?w=800&q=80
+Caption: "Warehouse inventory management — the balance between stockouts and overstock"
+
+### Implementation notes
+- Images are decorative and supportive — they should not slow
+  down the page. Use loading="lazy" on every image tag.
+- If the page already has images in some sections, check before
+  adding to avoid duplicates
+- Images must work on both desktop and mobile screen sizes
+
+Tell me "Fix 7 complete" and confirm all images are visible
+when scrolling through Module 2.
+
+---
+
+## AFTER ALL 3 FIXES ARE COMPLETE
+
+1. Final test of all 3 fixes:
+   - Fix 5: Go to instructor dashboard → click "Reset Password"
+     on a student → set a new password → log in as that student
+     with the new password → confirm it works
+   - Fix 6: Log out → log in with huvet@ggc.edu / Beyza2015 →
+     confirm instructor dashboard loads with full access
+   - Fix 7: Scroll through Module 2 → confirm images appear
+     in all 5 sections with captions visible
+
+2. Fix any errors found during testing
+
+3. Tell me:
+   "All 3 fixes complete and tested. Ready to push to GitHub."
+
+4. Commit all changes with this exact message:
+   "Add: password reset, second instructor account, section images"
+   Then push to GitHub.
+
+---
+
+## AFTER GITHUB PUSH IS CONFIRMED
+
+I will then:
+1. Go to render.com → my web service
+2. Click Manual Deploy → Deploy latest commit
+3. Wait 3–5 minutes for the build
+4. Open the live URL
+5. Test all 3 fixes in production:
+   - Reset a student password from instructor dashboard
+   - Log in as huvet@ggc.edu
+   - Scroll through Module 2 and confirm images load

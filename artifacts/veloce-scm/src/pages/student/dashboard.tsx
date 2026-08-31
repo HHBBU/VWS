@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useGetStudentDashboard } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -9,9 +10,31 @@ import { Trophy, Lock, PlayCircle, CheckCircle2, AlertCircle, Award, Star, Clock
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, differenceInDays, isPast, isFuture } from "date-fns";
 import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts";
+import { DecisionCascadeCard } from "@/components/DecisionCascadeCard";
+
+interface CascadeData {
+  allSubmitted: true;
+  modules: [
+    { moduleKey: "M1"; score: number; kpis: Record<string, unknown> },
+    { moduleKey: "M2"; score: number; kpis: Record<string, unknown> },
+    { moduleKey: "M3"; score: number; kpis: Record<string, unknown> },
+  ];
+}
 
 export default function StudentDashboard() {
   const { data, isLoading, error } = useGetStudentDashboard();
+  const [cascadeData, setCascadeData] = useState<CascadeData | null>(null);
+
+  const allSubmitted = data?.modules.every((m) => m.status === "Submitted") ?? false;
+
+  useEffect(() => {
+    if (!allSubmitted) return;
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${base}/api/student/cascade`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => { if (d.allSubmitted) setCascadeData(d as CascadeData); })
+      .catch(() => {});
+  }, [allSubmitted]);
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -208,6 +231,11 @@ export default function StudentDashboard() {
               );
             })}
           </div>
+
+          {/* Decision Cascade card — shown only after all 3 modules submitted */}
+          {cascadeData && (
+            <DecisionCascadeCard data={cascadeData} maxScore={52} />
+          )}
 
           {/* Status legend */}
           <div className="text-xs text-muted-foreground leading-relaxed pt-1">

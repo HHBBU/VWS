@@ -159,6 +159,7 @@ export interface M2SimulationResult {
       true_bottleneck: string;
       true_bottleneck_util: number;
       wc_utilizations: Record<string, number>;
+      wc_utilizations_pre: Record<string, number>;
       student_target: string | null;
     };
   };
@@ -432,14 +433,21 @@ export function runModule2Simulation(
   else                                            sopScore = 6;
 
   // Category 3: Bottleneck & Capacity Decision (10 pts)
-  // Compute work-center utilization from S&OP plan
+  // Compute work-center utilization from S&OP plan.
+  // The improvement multiplier is applied to the targeted work center so students
+  // can see the visible utilization change from their bottleneck decision.
   const wcUtil: Record<string, number> = {};
+  const wcUtilPre: Record<string, number> = {};
   for (const [wcName, wc] of Object.entries(WORK_CENTERS)) {
     let totalRequiredMin = 0;
     for (let i = 0; i < 8; i++) {
       totalRequiredMin += (sopPlanA[i] * wc.sam_a + sopPlanB[i] * wc.sam_b);
     }
-    const totalAvailableMin = wc.capacity_min_day * 7 * 8;
+    const baseAvailableMin = wc.capacity_min_day * 7 * 8;
+    wcUtilPre[wcName] = baseAvailableMin > 0 ? totalRequiredMin / baseAvailableMin : 0;
+    // Apply capacity improvement multiplier to the targeted work center
+    const wcMultiplier = improveCfg.work_center === wcName ? improveCfg.multiplier : 1.0;
+    const totalAvailableMin = wc.capacity_min_day * wcMultiplier * 7 * 8;
     wcUtil[wcName] = totalAvailableMin > 0 ? totalRequiredMin / totalAvailableMin : 0;
   }
 
@@ -477,6 +485,9 @@ export function runModule2Simulation(
     wc_utilizations: Object.fromEntries(
       Object.entries(wcUtil).map(([k, v]) => [k, Math.round(v * 100 * 10) / 10])
     ),
+    wc_utilizations_pre: Object.fromEntries(
+      Object.entries(wcUtilPre).map(([k, v]) => [k, Math.round(v * 100 * 10) / 10])
+    ),
     student_target: studentTargetWc,
   };
 
@@ -500,12 +511,6 @@ export function runModule2Simulation(
 
   const leanQualityScore = Math.min(10, layoutPts + flowPts + trainingPts + leanPts);
 
-  // Category 5: Justification (5 pts)
-  let justScore: number;
-  if      (justification.length >= 500) justScore = 5;
-  else if (justification.length >= 300) justScore = 4;
-  else                                   justScore = 2;
-
   // Validity flags (informational only — not scored in v3)
   const weeklyCapacity = dailyCapacity * 7;
   const validationFlags: string[] = [];
@@ -521,18 +526,18 @@ export function runModule2Simulation(
     sopQuality:       sopScore,
     bottleneckScore,
     leanQualityScore,
-    justification:    justScore,
+    justification:    0,
     bottleneckDetail,
   };
 
   const totalScore = Math.round(
-    performanceScore + sopScore + bottleneckScore + leanQualityScore + justScore
+    performanceScore + sopScore + bottleneckScore + leanQualityScore
   );
 
   let letterGrade: string;
-  if      (totalScore >= 50) letterGrade = "A";
-  else if (totalScore >= 44) letterGrade = "B";
-  else if (totalScore >= 38) letterGrade = "C";
+  if      (totalScore >= 46) letterGrade = "A";
+  else if (totalScore >= 40) letterGrade = "B";
+  else if (totalScore >= 34) letterGrade = "C";
   else                        letterGrade = "D";
 
   // ── Feedback ──
@@ -561,7 +566,7 @@ export function runModule2Simulation(
 
   return {
     score: totalScore,
-    maxScore: 55,
+    maxScore: 50,
     letterGrade,
     scoreBreakdown,
     kpis: {

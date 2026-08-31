@@ -98,7 +98,11 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-8 text-center text-sm text-muted-foreground">
+            <p className="mt-3 text-center text-xs text-muted-foreground italic">
+              Forgot your password? Ask your instructor to reset it for you.
+            </p>
+
+            <div className="mt-5 text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link href="/register">
                 <span className="text-primary font-semibold hover:underline cursor-pointer">

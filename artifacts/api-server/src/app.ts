@@ -1,5 +1,5 @@
 import path from "path";
-import { existsSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 import express, { type Express } from "express";
 import cors from "cors";
 import session from "express-session";
@@ -41,6 +41,10 @@ app.use(
     },
   }),
 );
+
+const uploadsDir = path.resolve(process.cwd(), "artifacts/api-server/public/uploads");
+mkdirSync(uploadsDir, { recursive: true });
+app.use("/api/uploads", express.static(uploadsDir));
 
 app.use("/api", router);
 

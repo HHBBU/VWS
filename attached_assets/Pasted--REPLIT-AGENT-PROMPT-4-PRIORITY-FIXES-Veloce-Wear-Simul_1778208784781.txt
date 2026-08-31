@@ -1,0 +1,341 @@
+# REPLIT AGENT PROMPT — 4 PRIORITY FIXES
+# Veloce Wear Simulation
+# Paste this entire prompt into the Replit Agent chat
+
+Work through these 4 fixes ONE AT A TIME in this exact order.
+Say "Fix [N] complete" before starting the next one.
+Do NOT change any grading logic, scoring thresholds, or engine constants.
+Do NOT remove any existing features or UI elements.
+
+---
+
+## FIX 1 — CRITICAL BUG: Student Decisions Not Registering
+
+### The problem
+Students select options in Module 2 (bottleneck improvement, training,
+layout, flow, lean) but the simulation ignores all of them. Evidence:
+- Total Investment always shows €0
+- Bottleneck feedback always says "none" regardless of selection
+- No investment costs appear in cost breakdown
+
+### What to do
+1. Open the Module 2 page template/component
+2. Find the exact `name` attribute of each of these 5 dropdowns:
+   - Capacity Improvement Decision (bottleneck selector)
+   - Training Investment
+   - Factory Layout
+   - Production Flow Model
+   - Lean / Quality-at-Source Initiative
+3. Open the server route handling Module 2 form submission
+4. Find what field names the server reads from the request body
+5. Find every mismatch between form field names and server field names
+6. Fix every mismatch so they match exactly
+7. Check the simulation engine — confirm it also reads the same
+   field names and applies the effects correctly:
+   - Bottleneck improvement → increases that work center capacity
+     by the correct multiplier AND adds cost to Total Investment
+   - Training → reduces scrap/rework rate AND adds cost
+   - Layout + Flow → applies changeover efficiency factor
+   - Lean → applies holding/defect/downtime factor AND adds cost
+
+### Test to confirm fix works
+Run a practice simulation with:
+- Bottleneck: "Modify Sewing — Line balancing aids (+20%, €22,000)"
+- Training: "Six Sigma Green Belt — €7,500"
+- Lean: "Poka-Yoke Devices — €6,500"
+
+Expected results:
+- Total Investment = €36,000 (22,000 + 7,500 + 6,500)
+- Cost breakdown shows Training = €7,500, Lean = €6,500,
+  Capacity Improvement = €22,000
+- Bottleneck feedback no longer says "none"
+- Sewing utilization drops from ~115% toward ~96% after modification
+
+Tell me "Fix 1 complete" and list every field name mismatch you found.
+
+---
+
+## FIX 2 — Instructor Can Remove Students
+
+### What to build
+1. In the instructor dashboard student list, add a red "Remove"
+   button (or trash icon 🗑) next to each student row
+2. When clicked, show a confirmation dialog:
+   - Title: "Remove Student"
+   - Message: "Are you sure you want to remove [Student Name]?
+     This permanently deletes all their simulation data
+     and cannot be undone."
+   - Buttons: "Cancel" (gray) and "Remove Student" (red)
+3. If confirmed:
+   - Delete the student account from the database
+   - Delete ALL their module submissions and simulation results
+   - Remove them from the list immediately (no page refresh needed)
+   - Show green success message: "Student removed successfully"
+4. Safety rules:
+   - Instructor accounts cannot be removed with this button
+   - Removing one student never affects another student's data
+
+Tell me "Fix 2 complete" when done.
+
+---
+
+## FIX 3 — Additional KPI Charts in Simulation Results
+
+Add these charts to the Module 2 results page using whatever
+charting library is already in this project. Place them below
+the existing score breakdown section.
+
+### Chart 1 — Cost Breakdown Bar Chart
+- Type: Vertical bar chart
+- Title: "Cost Breakdown vs Target"
+- X-axis labels: Capacity | Holding | Changeovers | Stockouts |
+  Markdown | Scrap/Rework | Training | Lean | Capacity Impr.
+- Y-axis: Euros (€)
+- Each bar a different color
+- Add a horizontal dashed red line at the target total cost
+  for the student's chosen capacity mode:
+  Standard = €65,000 | Overtime = €80,000 | Two-Shift = €100,000
+- Show the actual total cost value on the chart
+- If total cost exceeds target, shade the excess area red
+
+### Chart 2 — Work Center Utilization (Improved)
+Replace or improve the existing bottleneck display with:
+- Type: Horizontal bar chart
+- Title: "Work Center Utilization — Peak Week"
+- Bars: Cutting | Dyeing/Finishing | Sewing | Packaging
+- Color rules:
+  - Green if utilization < 85%
+  - Amber if 85–100%
+  - Red if > 100%
+- Add a vertical dashed line at 100% labeled "Capacity Limit"
+- Add a vertical dashed line at 85% labeled "Recommended Max"
+- Label each bar with the exact utilization % number
+- Add a "⚠ Bottleneck" badge on the highest bar
+
+### Chart 3 — Service Level & Cost Efficiency Gauges
+- Type: Two semicircle gauge charts side by side
+- Left gauge: Service Level %
+  - Green zone: ≥ 95%
+  - Amber zone: 90–95%
+  - Red zone: < 90%
+  - Show the number in the center of the gauge
+- Right gauge: Cost Efficiency
+  - Show as "X% over/under target"
+  - Green zone: within 5% of target
+  - Amber zone: 5–15% over
+  - Red zone: > 15% over
+  - Show the % value in the center
+
+### Chart 4 — Weekly Production vs Demand
+- Type: Line chart
+- Title: "S&OP Plan vs Demand — 8 Weeks"
+- X-axis: Week 1 through Week 8
+- Line 1 (solid blue): Student's planned production per week
+- Line 2 (dashed orange): Forecasted demand per week
+- Shaded area between lines:
+  - Green shading when production > demand (inventory building)
+  - Red shading when production < demand (stockout risk)
+- Show this chart collapsed by default with a
+  "📊 View Weekly Plan Chart" button to expand it
+
+### Placement
+- Charts 1, 2, 3: Display in a 2-column grid below Score Breakdown
+- Chart 4: Below Charts 1–3, collapsed by default
+- All charts must be responsive (work on smaller screens)
+- Charts only appear after a simulation has been run
+  (not on the blank input form)
+
+Tell me "Fix 3 complete" when all 4 charts are showing correctly.
+
+---
+
+## FIX 4 — BOM Clarity, MPS Explanation & Module Cascade Notes
+
+Students are emailing asking what the Bill of Materials is, how MPS
+is generated, and how modules connect. Add the following explanatory
+content to eliminate these questions.
+
+### 4A — Module Cascade Banner (Top of Each Module)
+
+Add a collapsible info banner at the very top of Module 2
+(above everything else, before Section 1):
+
+```
+📊 How Module 2 Connects to Your Module 1 Decisions
+
+Your M1 Forecast:  SKU A = [pull actual value] units/month
+                   SKU B = [pull actual value] units/month
+Your M1 Avg Supplier Reliability: [pull actual value]%
+Your M1 Avg Lead Time: [pull actual value] days
+
+These Module 1 results are now active in this simulation:
+→ Your M1 forecast drives the 8-week demand plan below
+→ Your M1 reliability % determines how many disruption days occur
+   (lower reliability = more days where production drops by ~50%)
+→ You do NOT re-forecast in Module 2 — your M1 numbers carry forward
+
+[Hide ▲] button to collapse this banner
+```
+
+Pull the actual numbers from the student's saved Module 1 submission.
+Style: light blue info box with a subtle left border.
+Default state: expanded on first visit, collapsible after that.
+
+Add a similar banner at the top of Module 3:
+
+```
+📊 How Module 3 Connects to Your Module 1 & 2 Decisions
+
+Your M1 Forecast:  SKU A = [value] · SKU B = [value]
+Your M2 Service Level Achieved: [value]%
+
+These results are now active in this simulation:
+→ Your M1 forecasts set the daily demand baseline for ROP and EOQ
+→ Your M2 service level affects lead time variability here
+   (service level below 92% stretches your max lead time by up to 40%)
+→ You do NOT re-forecast here — use your M1 values for all calculations
+
+[Hide ▲] button to collapse
+```
+
+### 4B — Bill of Materials Panel in Module 2
+
+Add a collapsible panel in Module 2 between Section 1 (S&OP plan)
+and Section 2 (Factory Policies). Label it:
+"📦 Bill of Materials & Production Data — Click to expand"
+
+When expanded, show this content:
+
+```
+BILL OF MATERIALS — How Raw Materials Convert to Finished Goods
+
+SKU A — Trend Tee (Cotton Knit):
+  • Fabric required:     0.23 kg per unit
+  • Factory scrap rate:  6%
+  • Actual fabric used:  0.23 × 1.06 = 0.2438 kg per unit produced
+  • This was calculated automatically in Module 1 when you set your
+    cotton procurement quantity. The simulation uses your M1 values.
+
+SKU B — Core Jogger (Nylon-Spandex):
+  • Fabric required:     0.42 kg per unit
+  • Factory scrap rate:  8%
+  • Actual fabric used:  0.42 × 1.08 = 0.4536 kg per unit produced
+  • Same as above — your M1 nylon procurement feeds into M2 automatically.
+
+──────────────────────────────────────────────────────
+STANDARD ALLOWED MINUTES (SAM) — Time to Make One Unit
+
+Work Center      SKU A (Trend Tee)    SKU B (Core Jogger)
+Cutting          0.8 min/unit         1.1 min/unit
+Dyeing/Finish    0.7 min/unit         1.0 min/unit
+Sewing           3.2 min/unit         4.8 min/unit  ← most time-intensive
+Packaging        0.5 min/unit         0.7 min/unit
+
+⚠ Note: SKU B takes 50% longer in sewing than SKU A.
+This is why the sewing work center becomes the bottleneck
+when SKU B demand is high. Use the SAM table to calculate
+your bottleneck manually before selecting an improvement.
+
+──────────────────────────────────────────────────────
+HOW TO CALCULATE REQUIRED MINUTES FOR ANY WORK CENTER
+
+Formula: Required Minutes = (SKU A units × SAM_A) + (SKU B units × SAM_B)
+
+Example — Week 4 Sewing, if you plan 6,000 SKU A and 2,800 SKU B:
+  = (6,000 × 3.2) + (2,800 × 4.8)
+  = 19,200 + 13,440
+  = 32,640 minutes required
+
+Available sewing capacity = 3,100 min/day × 7 days = 21,700 min/week
+Utilization = 32,640 ÷ 21,700 × 100 = 150.4% — OVERLOADED
+```
+
+Default state: collapsed.
+Style: neutral gray panel with a subtle border.
+
+### 4C — MPS Auto-Generation Explanation in Module 2
+
+Wherever the MPS (Master Production Schedule) is displayed in Module 2,
+add an info note directly above it:
+
+```
+ℹ️ The Master Production Schedule (MPS) below is automatically
+   generated from your S&OP plan — you do not enter it manually.
+
+How it works:
+  1. You enter weekly production targets for SKU A and SKU B above
+  2. The simulation applies your lot-sizing yield loss to get
+     net planned production (units actually completed per week)
+  3. The MPS is what drives capacity load for each work center
+
+Yield loss applied to your S&OP plan:
+  Small lot sizing:  MPS = your plan × (1 − 8% yield loss)
+  Medium lot sizing: MPS = your plan × (1 − 4% yield loss)
+  Large lot sizing:  MPS = your plan × (1 − 2% yield loss)
+
+Example: If you plan 6,000 SKU A in Week 4 with Medium lot sizing,
+the MPS shows 5,760 units completed (6,000 × 0.96 = 5,760).
+```
+
+Style: small italic info box with a light blue left border.
+Place it directly above the MPS table/display, not in a separate section.
+
+### 4D — BOM Auto-Calculation Note in Module 1
+
+In Module 1, wherever material quantities (kg of cotton, kg of nylon)
+are displayed or calculated, add a small explanatory note:
+
+```
+✅ This quantity was calculated automatically by the simulation.
+
+How your cotton requirement was calculated:
+  SKU A forecast × 0.23 kg/unit × 1.06 scrap factor
+  = [actual forecast_A value] × 0.23 × 1.06
+  = [calculated kg result] kg of cotton required
+
+How your nylon requirement was calculated:
+  SKU B forecast × 0.42 kg/unit × 1.08 scrap factor
+  = [actual forecast_B value] × 0.42 × 1.08
+  = [calculated kg result] kg of nylon required
+
+These were your procurement targets when you selected suppliers.
+Your Module 2 simulation uses these same quantities automatically.
+```
+
+Insert the student's actual numbers in place of the placeholders.
+Style: small green checkmark info box.
+
+Tell me "Fix 4 complete" when all cascade banners, BOM panel,
+MPS note, and Module 1 calculation note are added and displaying.
+
+---
+
+## AFTER ALL 4 FIXES ARE COMPLETE
+
+1. Do a final check of all 4 fixes:
+   - Fix 1: Run practice sim → Total Investment shows correct sum
+   - Fix 2: Remove a test student from instructor dashboard
+   - Fix 3: All 4 charts appear in simulation results
+   - Fix 4: Cascade banner shows at top of Module 2 and 3,
+     BOM panel expands correctly, MPS note is visible,
+     Module 1 shows calculation breakdown
+
+2. Fix any errors found during testing
+
+3. Then tell me:
+   "All 4 fixes are complete and tested. Ready to push to GitHub."
+
+4. Commit all changes with this exact message:
+   "Fix: bottleneck form bug, student removal, KPI charts,
+   BOM/MPS clarity and cascade notes"
+   Then push to GitHub.
+
+---
+
+## AFTER GITHUB PUSH IS CONFIRMED
+
+I will then:
+1. Go to render.com → my web service
+2. Click Manual Deploy → Deploy latest commit
+3. Wait 3–5 minutes for the build to complete
+4. Open the live URL and test all 4 fixes in production

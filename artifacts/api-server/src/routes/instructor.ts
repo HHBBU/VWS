@@ -6,8 +6,13 @@ import {
   moduleExtensionsTable,
   moduleSubmissionsTable,
   simulationRunsTable,
+  configTable,
 } from "@workspace/db/schema";
 import { and, eq, or, ilike } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import multer from "multer";
+import path from "path";
+import { mkdirSync } from "fs";
 import {
   GetGradebookResponse as GradebookDataSchema,
   GetSettingsResponse as SettingsDataSchema,
@@ -18,6 +23,24 @@ import {
 const ErrorResponseSchema = { parse: (v: any) => v };
 
 const router: IRouter = Router();
+
+const uploadsDir = path.resolve(process.cwd(), "artifacts/api-server/public/uploads");
+mkdirSync(uploadsDir, { recursive: true });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (/^image\/(jpeg|png|gif|webp|svg\+xml)$/.test(file.mimetype)) cb(null, true);
+    else cb(new Error("Only image files are allowed"));
+  },
+});
 
 function requireInstructor(req: Request, res: Response, next: () => void) {
   if (!req.session.userId) {
@@ -380,6 +403,173 @@ router.delete("/extensions/:extensionId", requireInstructor, async (req: Request
   return res.json(MessageResponseSchema.parse({ message: "Extension removed" }));
 });
 
+router.delete("/students/:userId", requireInstructor, async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId as string, 10);
+
+  if (isNaN(userId)) {
+    return res.status(400).json(ErrorResponseSchema.parse({ error: "Invalid user ID" }));
+  }
+
+  const [target] = await db
+    .select({ id: usersTable.id, role: usersTable.role })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+
+  if (!target) {
+    return res.status(404).json(ErrorResponseSchema.parse({ error: "User not found" }));
+  }
+
+  if (target.role !== "student") {
+    return res.status(403).json(ErrorResponseSchema.parse({ error: "Cannot remove instructor accounts" }));
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(simulationRunsTable).where(eq(simulationRunsTable.userId, userId));
+    await tx.delete(moduleSubmissionsTable).where(eq(moduleSubmissionsTable.userId, userId));
+    await tx.delete(moduleExtensionsTable).where(eq(moduleExtensionsTable.userId, userId));
+    await tx.delete(usersTable).where(eq(usersTable.id, userId));
+  });
+
+  return res.status(204).send();
+});
+
+router.post("/students/:userId/reset-password", requireInstructor, async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId as string, 10);
+
+  if (isNaN(userId)) {
+    return res.status(400).json(ErrorResponseSchema.parse({ error: "Invalid user ID" }));
+  }
+
+  const rawPassword = (req.body as { newPassword?: string }).newPassword ?? "";
+  const newPassword = rawPassword.trim();
+  if (newPassword.length < 1) {
+    return res.status(400).json(ErrorResponseSchema.parse({ error: "New password is required" }));
+  }
+
+  const [target] = await db
+    .select({ id: usersTable.id, role: usersTable.role })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+
+  if (!target) {
+    return res.status(404).json(ErrorResponseSchema.parse({ error: "User not found" }));
+  }
+
+  if (target.role !== "student") {
+    return res.status(403).json(ErrorResponseSchema.parse({ error: "Cannot reset instructor passwords" }));
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+
+  await db
+    .update(usersTable)
+    .set({ passwordHash })
+    .where(eq(usersTable.id, userId));
+
+  return res.json(MessageResponseSchema.parse({ message: "Password reset successfully" }));
+});
+
+router.get("/instructors", requireInstructor, async (req: Request, res: Response) => {
+  const instructors = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+      studentId: usersTable.studentId,
+      createdAt: usersTable.createdAt,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.role, "instructor"))
+    .orderBy(usersTable.createdAt);
+
+  return res.json({
+    instructors: instructors.map((i) => ({
+      ...i,
+      createdAt: i.createdAt.toISOString(),
+    })),
+  });
+});
+
+router.post("/instructors", requireInstructor, async (req: Request, res: Response) => {
+  const { name, email, studentId, password } = req.body as {
+    name?: string;
+    email?: string;
+    studentId?: string;
+    password?: string;
+  };
+
+  if (!name?.trim() || !email?.trim() || !studentId?.trim() || !password?.trim()) {
+    return res.status(400).json(ErrorResponseSchema.parse({ error: "All fields are required" }));
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const [existing] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(or(eq(usersTable.email, normalizedEmail), eq(usersTable.studentId, studentId.trim())))
+    .limit(1);
+
+  if (existing) {
+    return res.status(409).json(ErrorResponseSchema.parse({ error: "Email or username already in use" }));
+  }
+
+  const passwordHash = await bcrypt.hash(password.trim(), 10);
+
+  const [created] = await db
+    .insert(usersTable)
+    .values({
+      name: name.trim(),
+      email: normalizedEmail,
+      studentId: studentId.trim(),
+      role: "instructor",
+      passwordHash,
+    })
+    .returning({
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+      studentId: usersTable.studentId,
+      createdAt: usersTable.createdAt,
+    });
+
+  return res.status(201).json({
+    instructor: { ...created, createdAt: created.createdAt.toISOString() },
+  });
+});
+
+router.delete("/instructors/:id", requireInstructor, async (req: Request, res: Response) => {
+  const targetId = parseInt(req.params.id as string, 10);
+
+  if (isNaN(targetId)) {
+    return res.status(400).json(ErrorResponseSchema.parse({ error: "Invalid instructor ID" }));
+  }
+
+  if (targetId === req.session.userId) {
+    return res.status(403).json(ErrorResponseSchema.parse({ error: "You cannot remove your own account" }));
+  }
+
+  const [target] = await db
+    .select({ id: usersTable.id, role: usersTable.role })
+    .from(usersTable)
+    .where(eq(usersTable.id, targetId))
+    .limit(1);
+
+  if (!target) {
+    return res.status(404).json(ErrorResponseSchema.parse({ error: "Instructor not found" }));
+  }
+
+  if (target.role !== "instructor") {
+    return res.status(403).json(ErrorResponseSchema.parse({ error: "Can only remove instructor accounts from this endpoint" }));
+  }
+
+  await db.delete(usersTable).where(eq(usersTable.id, targetId));
+
+  return res.status(204).send();
+});
+
 router.delete("/submissions/:userId/:moduleKey", requireInstructor, async (req: Request, res: Response) => {
   const userId = parseInt(req.params.userId as string, 10);
   const moduleKey = req.params.moduleKey as string;
@@ -413,5 +603,48 @@ router.delete("/submissions/:userId/:moduleKey", requireInstructor, async (req: 
 
   return res.json(MessageResponseSchema.parse({ message: "Submission reset successfully" }));
 });
+
+router.get("/disruption-config", requireInstructor, async (_req: Request, res: Response) => {
+  const [row] = await db.select().from(configTable).where(eq(configTable.key, "disruption_config")).limit(1);
+  const cfg = row ? JSON.parse(row.value) : { M2: "none", M3: "none" };
+  return res.json(cfg);
+});
+
+router.put("/disruption-config", requireInstructor, async (req: Request, res: Response) => {
+  const cfg = req.body ?? {};
+  await db
+    .insert(configTable)
+    .values({ key: "disruption_config", value: JSON.stringify(cfg) })
+    .onConflictDoUpdate({ target: configTable.key, set: { value: JSON.stringify(cfg) } });
+  return res.json({ message: "Disruption config updated" });
+});
+
+router.get("/image-config", requireInstructor, async (_req: Request, res: Response) => {
+  const [row] = await db.select().from(configTable).where(eq(configTable.key, "image_config")).limit(1);
+  const overrides = row ? JSON.parse(row.value) : {};
+  return res.json(overrides);
+});
+
+router.put("/image-config", requireInstructor, async (req: Request, res: Response) => {
+  const overrides = req.body ?? {};
+  await db
+    .insert(configTable)
+    .values({ key: "image_config", value: JSON.stringify(overrides) })
+    .onConflictDoUpdate({ target: configTable.key, set: { value: JSON.stringify(overrides) } });
+  return res.json({ message: "Image config updated" });
+});
+
+router.post(
+  "/upload-image",
+  requireInstructor,
+  upload.single("image"),
+  (req: Request, res: Response) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file received" });
+    }
+    const url = `/api/uploads/${req.file.filename}`;
+    return res.json({ url });
+  },
+);
 
 export default router;

@@ -1,0 +1,21 @@
+export const CO2_KG_PER_FLIGHT = 500;
+
+export const CAR_KM_PER_KG_CO2 = 8.33;
+
+export const NEARSHORE_LEAD_DAYS = 6;
+
+export const BENCHMARK_SL_BEST = 97;
+export const BENCHMARK_SL_TYPICAL = 91;
+
+export const BENCHMARK_RELIABILITY_BEST = 95;
+export const BENCHMARK_RELIABILITY_TYPICAL = 90;
+
+export const BENCHMARK_UTIL_UPPER = 95;
+export const BENCHMARK_UTIL_LOWER = 80;
+
+export const BENCHMARK_MARGIN_BEST = 20;
+export const BENCHMARK_MARGIN_TYPICAL = 12;
+export const BENCHMARK_MARGIN_SCALE_MAX = 30;
+
+export const BENCHMARK_TRANSPORT_PCT_BEST = 8;
+export const BENCHMARK_TRANSPORT_PCT_TYPICAL = 15;

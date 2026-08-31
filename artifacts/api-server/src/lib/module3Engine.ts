@@ -388,7 +388,7 @@ export function runModule3Simulation(
   else if (justification.length >= 100) justScore = 1;
   else                                   justScore = 0;
 
-  const policyReasoningScore = netScore + justScore;
+  const policyReasoningScore = netScore;
 
   // Category 4: Validity (2 pts)
   const validationFlags: string[] = [];
@@ -408,9 +408,9 @@ export function runModule3Simulation(
   );
 
   let letterGrade: string;
-  if      (totalScore >= 50) letterGrade = "A";
-  else if (totalScore >= 44) letterGrade = "B";
-  else if (totalScore >= 38) letterGrade = "C";
+  if      (totalScore >= 48) letterGrade = "A";
+  else if (totalScore >= 42) letterGrade = "B";
+  else if (totalScore >= 36) letterGrade = "C";
   else                        letterGrade = "D";
 
   // ── Feedback (v3) ──
@@ -462,7 +462,7 @@ export function runModule3Simulation(
 
   return {
     score: totalScore,
-    maxScore: 55,
+    maxScore: 52,
     letterGrade,
     scoreBreakdown: {
       performance:    performanceScore,

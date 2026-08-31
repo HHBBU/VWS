@@ -1,0 +1,1 @@
+- [Veloce SCM M1 testing notes](veloce-scm-m1-testing.md) — Playwright struggles with M1's allocation form (use API testing); vitest lives per-package, wired into root build/test scripts.

@@ -1,0 +1,94 @@
+I want to grade the written justifications manually myself. The app should collect student justifications, but it should not auto-grade them and should not include justification grading in the automatic total score.
+
+Required grading logic:
+
+Remove all justification grading from the automatic total score.
+The app should NOT assign points to written justifications.
+The automatic score should include only the objective simulation/decision score.
+Written justifications should appear in the final downloadable report so I can grade them manually.
+
+Final downloadable report requirements:
+At the end of the simulation, generate a downloadable report that students can submit.
+
+The report should include:
+
+Student information
+Student name
+Student ID if available
+Course/section if already collected
+Attempt type: Practice or Official
+Official Attempt number if applicable
+Completion date and time
+Case seed or scenario ID
+Module-by-module results
+
+For each of the 3 modules, include:
+
+Module name
+Student decisions
+Key performance outcomes
+Auto-scored points earned for that module
+Maximum auto-scored points for that module
+Student written justification for that module
+
+Modules:
+
+Module 1: Global Sourcing
+Module 2: Operations & Flow
+Module 3: Distribution & Service
+Total auto-score summary
+Include:
+Total auto-scored points earned
+Total possible auto-scored points
+Percentage auto-score
+Do NOT include justification points in this total.
+
+Add this note clearly:
+“Written justifications are not included in the automatic score and will be graded separately by the instructor.”
+
+Instructor manual grading section
+Add a blank grading area for instructor use:
+Module 1 Justification Score: ____ / ____
+Module 2 Justification Score: ____ / ____
+Module 3 Justification Score: ____ / ____
+Instructor comments: ______________________
+Final instructor-adjusted grade: ____ / ____
+Downloadable format
+The final report should be downloadable at the end of the simulation.
+Preferred format:
+PDF if feasible.
+If PDF is difficult, create a clean printable HTML report with a “Download / Print Report” button.
+CSV or JSON export is optional only if easy to implement.
+Practice vs official report distinction
+
+For practice attempts:
+
+Generate a report, but watermark it clearly as:
+“PRACTICE REPORT — NOT FOR GRADING.”
+Practice reports should not count toward the official grade.
+
+For official attempts:
+
+Generate an:
+“OFFICIAL SIMULATION SCORE REPORT.”
+This is the report students submit for grading.
+Official attempt policy to preserve
+Students may have unlimited practice attempts.
+Practice attempts do not count.
+Students get two official attempts.
+Official Attempt 1 and Official Attempt 2 should use the same locked student-specific case seed/scenario for fairness.
+The higher official auto-score should count.
+Written justifications are reviewed manually by the instructor.
+If answer choices or decision options are shuffled between attempts, scoring must be tied to hidden option IDs, not visible A/B/C/D choices.
+
+Plan Mode instruction:
+Do not start coding yet. First inspect the current project structure and provide an implementation plan only.
+
+The implementation plan should explain:
+
+Which files, routes, components, or templates need to be changed
+Any database fields or tables that need to be added or updated
+How the final report will be generated
+How practice and official reports will be labeled differently
+How justification grading will be removed from the automatic score
+Any risks, assumptions, or questions before coding

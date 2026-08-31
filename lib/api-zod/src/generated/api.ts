@@ -117,6 +117,7 @@ export const GetModuleDataResponse = zod.object({
       letterGrade: zod.string(),
       isFinal: zod.boolean(),
       createdAt: zod.string(),
+      kpi: zod.record(zod.unknown()).nullish(),
     }),
   ),
   practiceCount: zod.number(),
