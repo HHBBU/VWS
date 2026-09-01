@@ -6,6 +6,7 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "@workspace/db";
 import router from "./routes";
+import healthRouter from "./routes/health";
 import { seedData } from "./lib/seed";
 
 const PgSession = connectPgSimple(session);
@@ -22,6 +23,8 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/api", healthRouter);
 
 app.use(
   session({
