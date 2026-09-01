@@ -34,3 +34,11 @@ The deployment build must produce every artifact consumed by the production run 
 **Why:** Publishing does not start the API service during the build phase, but the production runtime still needs both the compiled API server and the static web bundle.
 
 **How to apply:** Run dependency-safe checks, then explicitly build the API and web artifacts with their required build-time environment. Run the full E2E suite separately with development services running.
+
+## Artifact readiness retries
+
+Replit's artifact coordinator may log failed route probes before a runnable artifact has bound its port; application code cannot answer requests before its process is listening.
+
+**Why:** These pre-bind retries can look like API failures even when the process starts normally and the same readiness route returns 200 immediately afterward.
+
+**How to apply:** Judge startup health from the sequence: require a successful port/listen event and a dependency-free readiness response after binding. Keep readiness routes ahead of session and database middleware, and treat only post-bind failures as application regressions.
